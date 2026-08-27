@@ -10,7 +10,7 @@ class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_register_and_is_authenticated(): void
+    public function test_first_user_can_register_as_admin_and_is_authenticated(): void
     {
         $response = $this->post('/register', [
             'name' => 'Amina Ferry',
@@ -21,7 +21,24 @@ class AuthTest extends TestCase
 
         $response->assertRedirect('/dashboard');
         $this->assertAuthenticated();
-        $this->assertDatabaseHas('users', ['email' => 'amina@example.com']);
+        $this->assertDatabaseHas('users', [
+            'email' => 'amina@example.com',
+            'is_admin' => true,
+        ]);
+    }
+
+    public function test_registration_is_closed_after_first_user_exists(): void
+    {
+        User::factory()->create();
+
+        $this->get('/register')->assertNotFound();
+
+        $this->post('/register', [
+            'name' => 'Second User',
+            'email' => 'second@example.com',
+            'password' => 'Secure123',
+            'password_confirmation' => 'Secure123',
+        ])->assertNotFound();
     }
 
     public function test_user_can_login_with_valid_credentials(): void

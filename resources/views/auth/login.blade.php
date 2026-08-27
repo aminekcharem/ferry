@@ -2,9 +2,9 @@
     <section class="ui-shell flex min-h-[calc(100vh-65px)] items-center justify-center py-10">
         <div class="w-full max-w-md">
             <div class="ui-card p-6">
-                <span class="ui-badge">Backoffice</span>
+                <span class="ui-badge"><x-icon name="log-in" /> Backoffice</span>
                 <h1 class="mt-4 text-2xl font-bold text-slate-950">Login</h1>
-                <p class="mt-2 text-sm text-slate-600">Access your secure CTN processing workspace.</p>
+                <p class="mt-2 text-sm text-slate-600">Access your secure ferry processing workspace.</p>
 
                 @if (session('status'))
                     <div class="mt-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
@@ -32,12 +32,17 @@
                         Remember me
                     </label>
 
-                    <button class="ui-button-primary w-full" type="submit">Log in</button>
+                    <button class="ui-button-primary w-full" type="submit">
+                        <x-icon name="log-in" />
+                        <span>Log in</span>
+                    </button>
                 </form>
 
                 <p class="mt-6 text-center text-sm text-slate-600">
-                    Do not have an account yet?
-                    <a href="{{ route('register') }}" class="ui-link">Create an account</a>
+                    Need access? Ask an administrator to create your account.
+                    @if (\Illuminate\Support\Facades\Schema::hasTable('users') && ! \App\Models\User::query()->exists())
+                        <a href="{{ route('register') }}" class="ui-link">Create first admin</a>
+                    @endif
                 </p>
             </div>
         </div>

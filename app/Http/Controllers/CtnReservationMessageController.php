@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCtnReservationMessageRequest;
 use App\Http\Requests\UpdateCtnReservationStatusRequest;
 use App\Models\CtnReservationMessage;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,17 +13,25 @@ use Illuminate\View\View;
 
 class CtnReservationMessageController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
         $filters = $request->validate([
-            'date_from' => ['nullable', 'date'],
-            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'date_from' => ['nullable', 'date_format:d/m/Y'],
+            'date_to' => ['nullable', 'date_format:d/m/Y'],
             'status' => ['nullable', 'string', 'in:pending,reserved,cancelled'],
         ]);
+        $dateFrom = $this->dateFilterForQuery($filters['date_from'] ?? null);
+        $dateTo = $this->dateFilterForQuery($filters['date_to'] ?? null);
+
+        if ($dateFrom !== null && $dateTo !== null && $dateTo < $dateFrom) {
+            return back()
+                ->withInput()
+                ->withErrors(['date_to' => 'The received to date must be after or equal to the received from date.']);
+        }
 
         $messagesQuery = CtnReservationMessage::query()
-            ->when($filters['date_from'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
-            ->when($filters['date_to'] ?? null, fn ($query, $date) => $query->whereDate('created_at', '<=', $date))
+            ->when($dateFrom, fn ($query, $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($dateTo, fn ($query, $date) => $query->whereDate('created_at', '<=', $date))
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status));
 
         $unreadCount = CtnReservationMessage::unread()->count();
@@ -74,7 +83,7 @@ class CtnReservationMessageController extends Controller
 
     public function store(StoreCtnReservationMessageRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $request->validatedForStorage();
         $isRoundTrip = $data['journey_type'] === 'round_trip';
         $hasTrailer = $request->boolean('has_trailer');
         $hasVehicleDimensions = $request->boolean('vehicle_custom_dimensions');
@@ -102,6 +111,15 @@ class CtnReservationMessageController extends Controller
 
         return redirect()
             ->route('reservation.ctn')
-            ->with('status', 'Your CTN reservation request has been sent.');
+            ->with('status', 'Your ferry reservation request has been sent.');
+    }
+
+    private function dateFilterForQuery(?string $date): ?string
+    {
+        if ($date === null || $date === '') {
+            return null;
+        }
+
+        return CarbonImmutable::createFromFormat('!d/m/Y', $date)->format('Y-m-d');
     }
 }

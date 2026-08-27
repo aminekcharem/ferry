@@ -1188,8 +1188,35 @@ const getVehicleDimensions = (brand, model, year = null) => {
     return profile?.dimensions || defaultVehicleDimensions;
 };
 
+const formatStorageDate = (date) => {
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+
+    return localDate.toISOString().slice(0, 10);
+};
+
+const parseDisplayDate = (value) => {
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim());
+
+    if (!match) {
+        return null;
+    }
+
+    const [, day, month, year] = match;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+    if (
+        date.getFullYear() !== Number(year)
+        || date.getMonth() !== Number(month) - 1
+        || date.getDate() !== Number(day)
+    ) {
+        return null;
+    }
+
+    return date;
+};
+
 const setTodayAsMinimumDate = () => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = formatStorageDate(new Date());
     document.querySelectorAll('[data-travel-date]').forEach((input) => {
         input.min = today;
         if (!input.value) {
@@ -1255,8 +1282,11 @@ const getAvailableModelYears = (brand, model) => {
 const fillYearSelect = (select, brand = '', model = '') => {
     const selectedYear = select.dataset.selectedYear || '';
     const years = getAvailableModelYears(brand, model);
+    const placeholder = brand && model
+        ? (years.length ? 'Select year' : 'Year not found')
+        : 'Select year';
 
-    select.replaceChildren(new Option(years.length ? 'Select year' : 'Year not required', ''));
+    select.replaceChildren(new Option(placeholder, ''));
 
     years.forEach((year) => {
         const option = new Option(String(year), String(year));
@@ -1265,6 +1295,8 @@ const fillYearSelect = (select, brand = '', model = '') => {
     });
 
     select.disabled = years.length === 0;
+
+    return years;
 };
 
 const vehicleSpecificationUrl = (endpoint, parameters) => {
@@ -1329,11 +1361,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return values;
     };
 
-    const formatDate = (date) => {
-        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-
-        return localDate.toISOString().slice(0, 10);
-    };
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
@@ -1341,10 +1368,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const dateAttributesForField = (name) => {
         if (!name.includes('[passport_availability_date]')) {
-            return `max="${formatDate(today)}"`;
+            return `max="${formatStorageDate(today)}"`;
         }
 
-        return `min="${formatDate(tomorrow)}" max="${formatDate(maximumPassportDate)}"`;
+        return `min="${formatStorageDate(tomorrow)}" max="${formatStorageDate(maximumPassportDate)}"`;
+    };
+
+    const dateInputValue = (value) => {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return value;
+        }
+
+        const parsedDate = parseDisplayDate(value);
+
+        return parsedDate ? formatStorageDate(parsedDate) : value;
+    };
+
+    const validateDateInput = (input) => {
+        if (input.type !== 'date') {
+            return true;
+        }
+
+        if (input.value && input.min && input.value < input.min) {
+            input.setCustomValidity('Choose a later date.');
+
+            return false;
+        }
+
+        if (input.value && input.max && input.value > input.max) {
+            input.setCustomValidity('Choose an earlier date.');
+
+            return false;
+        }
+
+        input.setCustomValidity('');
+
+        return true;
+    };
+
+    const validateDateInputs = () => {
+        const outwardInput = form.querySelector('#outward_date');
+        const returnInput = form.querySelector('#return_date');
+        let valid = true;
+
+        form.querySelectorAll('input[type="date"]').forEach((input) => {
+            valid = validateDateInput(input) && valid;
+        });
+
+        if (outwardInput?.value && returnInput?.value) {
+            if (returnInput.value < outwardInput.value) {
+                returnInput.setCustomValidity('Return date must be after or equal to outward date.');
+                valid = false;
+            }
+        }
+
+        return valid;
     };
 
     const createField = (type, label, name, value = '') => {
@@ -1357,7 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <option value="male"${value === 'male' ? ' selected' : ''}>Male</option>
                     <option value="female"${value === 'female' ? ' selected' : ''}>Female</option>
                 </select>`
-                : `<input id="${id}" name="${name}" type="${type}" value="${value}" required ${type === 'date' ? dateAttributesForField(name) : ''} class="${inputClass}">`;
+                : `<input id="${id}" name="${name}" type="${type}" value="${type === 'date' ? dateInputValue(value) : value}" required ${type === 'date' ? dateAttributesForField(name) : ''} class="${inputClass}">`;
 
         wrapper.innerHTML = `
             <label for="${id}" class="block text-sm font-medium text-slate-800">${label}</label>
@@ -1549,6 +1627,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    form.addEventListener('input', (event) => {
+        if (event.target instanceof HTMLInputElement) {
+            validateDateInput(event.target);
+        }
+    });
+
+    form.addEventListener('submit', (event) => {
+        if (!validateDateInputs()) {
+            event.preventDefault();
+            form.reportValidity();
+        }
+    });
+
     passengerDetails.addEventListener('change', (event) => {
         const toggle = event.target.closest('[data-will-return-toggle]');
 
@@ -1570,31 +1661,79 @@ document.addEventListener('DOMContentLoaded', () => {
     const brandSelect = form.querySelector('#vehicle_brand');
     const modelSelect = form.querySelector('#vehicle_model');
     const yearSelect = form.querySelector('#vehicle_year');
+    const yearManualToggleWrapper = form.querySelector('[data-vehicle-year-manual-toggle-wrapper]');
+    const yearManualToggle = form.querySelector('[data-vehicle-year-manual-toggle]');
+    const yearManualWrapper = form.querySelector('[data-vehicle-year-manual]');
+    const yearManualInput = form.querySelector('#vehicle_year_manual');
     const otherBrand = form.querySelector('[data-other-brand]');
     const otherModel = form.querySelector('[data-other-model]');
     const vehicleLengthInput = form.querySelector('[name="vehicle_length"]');
     const vehicleWidthInput = form.querySelector('[name="vehicle_width"]');
     const vehicleHeightInput = form.querySelector('[name="vehicle_height"]');
     const vehicleDimensionInputs = [vehicleLengthInput, vehicleWidthInput, vehicleHeightInput];
+    const vehicleDimensionInputTargets = new Map([
+        [vehicleLengthInput, 'length'],
+        [vehicleWidthInput, 'width'],
+        [vehicleHeightInput, 'height'],
+    ]);
+    const vehicleDimensionInputsByTarget = {
+        length: vehicleLengthInput,
+        width: vehicleWidthInput,
+        height: vehicleHeightInput,
+    };
     let yearRequestId = 0;
     let dimensionRequestId = 0;
+    let isApplyingDimensionExtras = false;
+
+    const parseDimension = (value) => Number(String(value || '0').replace(',', '.')) || 0;
+
+    const getBaseDimension = (target) => {
+        const input = vehicleDimensionInputsByTarget[target];
+
+        return parseDimension(input.dataset.baseValue || input.value);
+    };
+
+    const getExtraDimensionValue = (target) => {
+        const toggle = form.querySelector(`[data-extra-dimension-toggle][data-extra-dimension-target="${target}"]`);
+        const select = form.querySelector(`[data-extra-dimension-select][data-extra-dimension-target="${target}"]`);
+
+        if (!toggle?.checked || select?.disabled) {
+            return 0;
+        }
+
+        return parseDimension(select.value);
+    };
+
+    const applyExtraDimensions = () => {
+        isApplyingDimensionExtras = true;
+        vehicleLengthInput.value = formatDimension(getBaseDimension('length') + getExtraDimensionValue('length'));
+        vehicleWidthInput.value = formatDimension(getBaseDimension('width'));
+        vehicleHeightInput.value = formatDimension(getBaseDimension('height') + getExtraDimensionValue('height'));
+        isApplyingDimensionExtras = false;
+    };
+
+    const setBaseVehicleDimensions = ({ length, width, height }) => {
+        vehicleLengthInput.dataset.baseValue = formatDimension(length);
+        vehicleWidthInput.dataset.baseValue = formatDimension(width);
+        vehicleHeightInput.dataset.baseValue = formatDimension(height);
+        applyExtraDimensions();
+    };
+
+    const hasActiveDimensionExtras = () =>
+        Boolean(form.querySelector('[data-extra-dimension-toggle]:checked'));
 
     const applyVehicleDimensions = async () => {
         const brand = brandSelect.value;
         const model = modelSelect.value;
-        const year = yearSelect.value;
+        const year = yearManualInput.disabled ? yearSelect.value : yearManualInput.value;
 
         if (!brand || brand === 'Other' || !model || model === 'Other') {
-            vehicleDimensionInputs.forEach((input, index) => {
-                input.value = formatDimension(Object.values(defaultVehicleDimensions)[index]);
-            });
+            setBaseVehicleDimensions(defaultVehicleDimensions);
             return;
         }
 
         const dimensions = getVehicleDimensions(brand, model, year);
-        vehicleLengthInput.value = formatDimension(dimensions.length);
-        vehicleWidthInput.value = formatDimension(dimensions.width);
-        vehicleHeightInput.value = formatDimension(dimensions.height);
+        setBaseVehicleDimensions(dimensions);
 
         if (!year) {
             return;
@@ -1610,15 +1749,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestId !== dimensionRequestId ||
                 brand !== brandSelect.value ||
                 model !== modelSelect.value ||
-                String(year) !== yearSelect.value ||
+                String(year) !== (yearManualInput.disabled ? yearSelect.value : yearManualInput.value) ||
                 !sourceDimensions
             ) {
                 return;
             }
 
-            vehicleLengthInput.value = formatDimension(sourceDimensions.length);
-            vehicleWidthInput.value = formatDimension(sourceDimensions.width);
-            vehicleHeightInput.value = formatDimension(sourceDimensions.height);
+            setBaseVehicleDimensions(sourceDimensions);
         } catch {
             // The vetted local catalogue remains available when the source cannot be reached.
         }
@@ -1628,14 +1765,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const brand = brandSelect.value;
         const model = modelSelect.value;
 
-        fillYearSelect(yearSelect, brand, model);
+        const fallbackYears = fillYearSelect(yearSelect, brand, model);
+        syncManualVehicleYear(fallbackYears.length === 0);
 
         if (!brand || brand === 'Other' || !model || model === 'Other') {
             return;
         }
 
         const requestId = ++yearRequestId;
-        yearSelect.replaceChildren(new Option('Recherche des années du modèle...', ''));
+        yearSelect.replaceChildren(new Option('Searching model years...', ''));
         yearSelect.disabled = true;
 
         try {
@@ -1649,17 +1787,46 @@ document.addEventListener('DOMContentLoaded', () => {
             // Never let an empty remote response erase locally verified generations.
             const fallbackYears = getAvailableModelYears(brand, model);
             const years = result.years?.length ? result.years : fallbackYears;
-            yearSelect.replaceChildren(new Option(years.length ? 'Select year' : 'Year not required', ''));
+            yearSelect.replaceChildren(new Option(years.length ? 'Select year' : 'Year not found', ''));
             years.forEach((year) => yearSelect.add(new Option(String(year), String(year))));
             yearSelect.disabled = years.length === 0;
+            syncManualVehicleYear(years.length === 0);
         } catch {
             if (requestId === yearRequestId) {
-                fillYearSelect(yearSelect, brand, model);
+                const years = fillYearSelect(yearSelect, brand, model);
+                syncManualVehicleYear(years.length === 0);
             }
         }
     };
 
+    const syncManualVehicleYear = (yearNotFound = yearSelect.disabled) => {
+        const hasSelectedVehicle = Boolean(brandSelect.value && modelSelect.value);
+        const showManualToggle = hasSelectedVehicle;
+
+        if (showManualToggle && yearNotFound) {
+            yearManualToggle.checked = true;
+        }
+
+        if (!showManualToggle) {
+            yearManualToggle.checked = false;
+        }
+
+        const showManualYear = showManualToggle && yearManualToggle.checked;
+
+        yearManualToggleWrapper.hidden = !showManualToggle;
+        yearManualWrapper.hidden = !showManualYear;
+        yearManualInput.disabled = !showManualYear;
+        yearSelect.disabled = showManualYear || yearNotFound || yearSelect.options.length <= 1;
+
+        if (showManualYear) {
+            yearSelect.value = '';
+        } else {
+            yearManualInput.value = '';
+        }
+    };
+
     fillYearSelect(yearSelect);
+    syncManualVehicleYear(false);
     fillSelect(brandSelect, Object.keys(carCatalog).sort(), 'Select brand');
     applyVehicleDimensions();
 
@@ -1670,8 +1837,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modelSelect.disabled = !brand;
         yearSelect.value = '';
         yearSelect.dataset.selectedYear = '';
+        yearManualToggle.checked = false;
+        yearManualInput.value = '';
         yearRequestId += 1;
         fillYearSelect(yearSelect);
+        syncManualVehicleYear(false);
         fillSelect(modelSelect, brandIsOther ? [] : carCatalog[brand] || [], 'Select model');
         otherModel.hidden = !brandIsOther;
         applyVehicleDimensions();
@@ -1681,6 +1851,8 @@ document.addEventListener('DOMContentLoaded', () => {
         otherModel.hidden = modelSelect.value !== 'Other';
         yearSelect.value = '';
         yearSelect.dataset.selectedYear = '';
+        yearManualToggle.checked = false;
+        yearManualInput.value = '';
         loadAvailableModelYears();
         applyVehicleDimensions();
     });
@@ -1689,9 +1861,23 @@ document.addEventListener('DOMContentLoaded', () => {
         applyVehicleDimensions();
     });
 
+    yearManualInput.addEventListener('input', () => {
+        yearManualInput.value = yearManualInput.value.replace(/\D/g, '').slice(0, 4);
+        applyVehicleDimensions();
+    });
+
+    yearManualToggle.addEventListener('change', () => {
+        syncManualVehicleYear(yearSelect.options.length <= 1);
+        applyVehicleDimensions();
+    });
+
     const vehicleDimensionsToggle = form.querySelector('[data-vehicle-dimensions-toggle]');
     const vehicleDimensions = form.querySelector('[data-vehicle-dimensions]');
     const syncVehicleDimensions = () => {
+        if (hasActiveDimensionExtras() && !vehicleDimensionsToggle.checked) {
+            vehicleDimensionsToggle.checked = true;
+        }
+
         const hasCustomDimensions = vehicleDimensionsToggle.checked;
         vehicleDimensions.hidden = !hasCustomDimensions;
         vehicleDimensionInputs.forEach((input) => {
@@ -1702,6 +1888,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
     vehicleDimensionsToggle.addEventListener('change', syncVehicleDimensions);
     syncVehicleDimensions();
+
+    const ensureVehicleDimensionsVisible = () => {
+        if (!vehicleDimensionsToggle.checked) {
+            vehicleDimensionsToggle.checked = true;
+            syncVehicleDimensions();
+        }
+    };
+
+    const roofBoxToggle = form.querySelector('[data-roof-box-toggle]');
+    const roofBoxPanel = form.querySelector('[data-roof-box-panel]');
+    const extraDimensionToggles = form.querySelectorAll('[data-extra-dimension-toggle]');
+    const extraDimensionSelects = form.querySelectorAll('[data-extra-dimension-select]');
+
+    const syncExtraDimensionControls = () => {
+        extraDimensionToggles.forEach((toggle) => {
+            const target = toggle.dataset.extraDimensionTarget;
+            const wrapper = form.querySelector(`[data-extra-dimension-select-wrapper="${target}"]`);
+            const select = form.querySelector(`[data-extra-dimension-select][data-extra-dimension-target="${target}"]`);
+            const showSelect = roofBoxToggle.checked && toggle.checked;
+
+            wrapper.hidden = !showSelect;
+            select.disabled = !showSelect;
+
+            if (showSelect) {
+                ensureVehicleDimensionsVisible();
+            }
+        });
+
+        applyExtraDimensions();
+    };
+
+    const syncRoofBox = () => {
+        const hasRoofBox = roofBoxToggle.checked;
+        roofBoxPanel.hidden = !hasRoofBox;
+
+        if (!hasRoofBox) {
+            extraDimensionToggles.forEach((toggle) => {
+                toggle.checked = false;
+            });
+        }
+
+        syncExtraDimensionControls();
+    };
+
+    vehicleDimensionInputs.forEach((input) => {
+        input.addEventListener('input', () => {
+            if (isApplyingDimensionExtras) {
+                return;
+            }
+
+            const target = vehicleDimensionInputTargets.get(input);
+            input.dataset.baseValue = formatDimension(Math.max(0, parseDimension(input.value) - getExtraDimensionValue(target)));
+            applyExtraDimensions();
+        });
+    });
+
+    roofBoxToggle.addEventListener('change', syncRoofBox);
+    extraDimensionToggles.forEach((toggle) => toggle.addEventListener('change', syncExtraDimensionControls));
+    extraDimensionSelects.forEach((select) => select.addEventListener('change', applyExtraDimensions));
+    syncRoofBox();
 
     const trailerToggle = form.querySelector('[data-trailer-toggle]');
     const trailerPanel = form.querySelector('[data-trailer-panel]');

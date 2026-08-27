@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -35,12 +36,18 @@ class AuthController extends Controller
 
     public function showRegister(): View
     {
+        abort_if(! Schema::hasTable('users') || User::query()->exists(), 404);
+
         return view('auth.register');
     }
 
     public function register(RegisterRequest $request): RedirectResponse
     {
-        $user = User::create($request->validated());
+        abort_if(! Schema::hasTable('users') || User::query()->exists(), 404);
+
+        $user = User::create(array_merge($request->validated(), [
+            'is_admin' => true,
+        ]));
 
         Auth::login($user);
         $request->session()->regenerate();
