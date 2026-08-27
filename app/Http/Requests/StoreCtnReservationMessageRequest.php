@@ -8,6 +8,8 @@ use Illuminate\Validation\Validator;
 
 class StoreCtnReservationMessageRequest extends FormRequest
 {
+    private const ACCEPTED_DATE_FORMATS = ['Y-m-d', 'd/m/Y'];
+
     public function authorize(): bool
     {
         return true;
@@ -21,9 +23,9 @@ class StoreCtnReservationMessageRequest extends FormRequest
             'customer_phone' => ['required', 'string', 'max:40'],
             'customer_message' => ['nullable', 'string', 'max:5000'],
             'journey_type' => ['required', 'in:one_way,round_trip'],
-            'departure_country' => ['required', 'in:Italy,France,Tunisia'],
-            'outward_date' => ['required', 'date'],
-            'return_date' => ['nullable', 'required_if:journey_type,round_trip', 'date', 'after_or_equal:outward_date'],
+            'departure_country' => ['required', 'in:Tunisia - Gênes,Tunisia - Civitavecchia,Tunisia - Palerme (Sicile),Tunisia - Marseille,Gênes - Tunisia,Civitavecchia - Tunisia,Palerme - Tunisia,Marseille - Tunisia'],
+            'outward_date' => ['required', 'string'],
+            'return_date' => ['nullable', 'required_if:journey_type,round_trip', 'string'],
             'outward_passengers' => ['required', 'array', 'size:6'],
             'outward_passengers.*' => ['required', 'integer', 'min:0', 'max:99'],
             'return_passengers' => ['nullable', 'array', 'size:6'],
@@ -58,6 +60,20 @@ class StoreCtnReservationMessageRequest extends FormRequest
         $validator->after(function (Validator $validator): void {
             $minimumPassportDate = CarbonImmutable::today()->addDay();
             $maximumPassportYear = CarbonImmutable::today()->addYears(10)->year;
+            $outwardDate = $this->dateFromInput($this->input('outward_date'));
+            $returnDate = $this->dateFromInput($this->input('return_date'));
+
+            if (! $validator->errors()->has('outward_date') && $outwardDate === null) {
+                $validator->errors()->add('outward_date', 'The outward date must be a valid date.');
+            }
+
+            if ($this->filled('return_date') && ! $validator->errors()->has('return_date') && $returnDate === null) {
+                $validator->errors()->add('return_date', 'The return date must be a valid date.');
+            }
+
+            if ($outwardDate !== null && $returnDate !== null && $returnDate->lt($outwardDate)) {
+                $validator->errors()->add('return_date', 'The return date must be after or equal to the outward date.');
+            }
 
             $this->validatePassportAvailabilityDates(
                 $this->input('passenger_details', []),
@@ -67,6 +83,18 @@ class StoreCtnReservationMessageRequest extends FormRequest
                 $validator,
             );
         });
+    }
+
+    public function validatedForStorage(): array
+    {
+        $data = $this->validated();
+
+        $data['outward_date'] = $this->dateFromInput($data['outward_date'])?->format('Y-m-d');
+        $data['return_date'] = isset($data['return_date']) && $data['return_date'] !== ''
+            ? $this->dateFromInput($data['return_date'])?->format('Y-m-d')
+            : null;
+
+        return $data;
     }
 
     private function validatePassportAvailabilityDates(
@@ -83,22 +111,29 @@ class StoreCtnReservationMessageRequest extends FormRequest
         foreach ($value as $key => $nestedValue) {
             $nestedAttribute = "{$attribute}.{$key}";
 
-            if ($key === 'passport_availability_date') {
+            if ($key === 'date_of_birth' || $key === 'passport_availability_date') {
                 $dateValue = (string) $nestedValue;
+                $date = $this->dateFromInput($dateValue);
 
-                if (! CarbonImmutable::canBeCreatedFromFormat($dateValue, 'Y-m-d')) {
-                    $validator->errors()->add($nestedAttribute, 'The passport availability date must be a valid date.');
+                if ($date === null) {
+                    $validator->errors()->add($nestedAttribute, 'The ' . str_replace('_', ' ', $key) . ' must be a valid date.');
 
                     continue;
                 }
 
-                $passportDate = CarbonImmutable::createFromFormat('Y-m-d', $dateValue)->startOfDay();
+                if ($key === 'date_of_birth' && $date->gt(CarbonImmutable::today())) {
+                    $validator->errors()->add($nestedAttribute, 'The date of birth must be today or earlier.');
+                }
 
-                if ($passportDate->lt($minimumDate)) {
+                if ($key === 'date_of_birth') {
+                    continue;
+                }
+
+                if ($date->lt($minimumDate)) {
                     $validator->errors()->add($nestedAttribute, 'The passport availability date must be after today.');
                 }
 
-                if ($passportDate->year > $maximumYear) {
+                if ($date->year > $maximumYear) {
                     $validator->errors()->add($nestedAttribute, "The passport availability date year may not be after {$maximumYear}.");
                 }
 
@@ -107,5 +142,26 @@ class StoreCtnReservationMessageRequest extends FormRequest
 
             $this->validatePassportAvailabilityDates($nestedValue, $nestedAttribute, $minimumDate, $maximumYear, $validator);
         }
+    }
+
+    private function dateFromInput(mixed $value): ?CarbonImmutable
+    {
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        foreach (self::ACCEPTED_DATE_FORMATS as $format) {
+            try {
+                $date = CarbonImmutable::createFromFormat('!' . $format, trim($value));
+            } catch (\InvalidArgumentException) {
+                continue;
+            }
+
+            if ($date->format($format) === trim($value)) {
+                return $date->startOfDay();
+            }
+        }
+
+        return null;
     }
 }

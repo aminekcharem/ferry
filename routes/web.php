@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CtnReservationMessageController;
 use App\Http\Controllers\VehicleSpecificationController;
@@ -34,5 +35,13 @@ Route::middleware('auth')->group(function (): void {
         ->name('backoffice.ctn-reservations.show');
     Route::patch('/backoffice/reservations-ctn/{ctnReservationMessage}/status', [CtnReservationMessageController::class, 'updateStatus'])
         ->name('backoffice.ctn-reservations.update-status');
+    Route::middleware('admin')->prefix('/backoffice/users')->name('backoffice.users.')->group(function (): void {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/create', [UserController::class, 'create'])->name('create');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('edit');
+        Route::patch('/{user}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+    });
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

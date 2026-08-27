@@ -1,17 +1,23 @@
-<x-layouts.app title="CTN Ferry Reservations">
+<x-layouts.app title="Ferry Reservations">
     <section class="border-b border-slate-200 bg-white">
         <div class="ui-shell grid min-h-[calc(100vh-65px)] items-center gap-10 py-12 lg:grid-cols-[1fr_430px] lg:py-16">
             <div class="max-w-3xl">
-                <span class="ui-badge">CTN Ferry booking</span>
+                <span class="ui-badge">Ferry booking</span>
                 <h1 class="mt-5 text-4xl font-bold leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
                     Book your crossing with vehicle, passengers, and trailer in minutes.
                 </h1>
                 <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                    A clear journey for customers and an organized backoffice to process every CTN request without losing important information.
+                    A clear journey for customers and an organized backoffice to process every ferry request without losing important information.
                 </p>
                 <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-                    <a href="{{ route('reservation.ctn') }}" class="ui-button-primary px-6">Start a reservation</a>
-                    <a href="{{ route('login') }}" class="ui-button-secondary px-6">Access backoffice</a>
+                    <a href="{{ route('reservation.ctn') }}" class="ui-button-primary px-6">
+                        <x-icon name="ship" />
+                        <span>Start a reservation</span>
+                    </a>
+                    <a href="{{ route('login') }}" class="ui-button-secondary px-6">
+                        <x-icon name="log-in" />
+                        <span>Access backoffice</span>
+                    </a>
                 </div>
                 <div class="mt-10 grid gap-4 sm:grid-cols-3">
                     <div class="border-l-2 border-primary pl-4">
@@ -31,7 +37,7 @@
 
             <aside class="ui-card overflow-hidden">
                 <div class="bg-primary-900 p-6 text-white">
-                    <p class="text-sm font-semibold text-primary-100">CTN request</p>
+                    <p class="text-sm font-semibold text-primary-100">Ferry request</p>
                     <h2 class="mt-2 text-2xl font-bold">Reservation flow</h2>
                     <p class="mt-3 text-sm leading-6 text-primary-50">The customer enters the itinerary, passengers, vehicle, and sensitive dimensions before validation.</p>
                 </div>

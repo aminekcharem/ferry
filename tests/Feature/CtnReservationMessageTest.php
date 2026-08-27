@@ -22,13 +22,14 @@ class CtnReservationMessageTest extends TestCase
             'journey_type' => 'one_way',
             'return_date' => null,
         ]);
+        $this->assertSame('2026-08-20', CtnReservationMessage::first()->outward_date->format('Y-m-d'));
     }
     public function test_passport_availability_date_must_be_after_today(): void
     {
         $this->travelTo('2026-08-22');
 
         $this->from(route('reservation.ctn'))
-            ->post(route('reservation.ctn.store'), $this->validPayloadWithPassportDate('2026-08-22'))
+            ->post(route('reservation.ctn.store'), $this->validPayloadWithPassportDate('22/08/2026'))
             ->assertRedirect(route('reservation.ctn', absolute: false))
             ->assertSessionHasErrors(['passenger_details.outward.0.0.passport_availability_date']);
 
@@ -40,7 +41,7 @@ class CtnReservationMessageTest extends TestCase
         $this->travelTo('2026-08-22');
 
         $this->from(route('reservation.ctn'))
-            ->post(route('reservation.ctn.store'), $this->validPayloadWithPassportDate('2037-01-01'))
+            ->post(route('reservation.ctn.store'), $this->validPayloadWithPassportDate('01/01/2037'))
             ->assertRedirect(route('reservation.ctn', absolute: false))
             ->assertSessionHasErrors(['passenger_details.outward.0.0.passport_availability_date']);
 
@@ -51,7 +52,7 @@ class CtnReservationMessageTest extends TestCase
     {
         $this->travelTo('2026-08-22');
 
-        $this->post(route('reservation.ctn.store'), $this->validPayloadWithPassportDate('2036-12-31'))
+        $this->post(route('reservation.ctn.store'), $this->validPayloadWithPassportDate('31/12/2036'))
             ->assertRedirect(route('reservation.ctn', absolute: false))
             ->assertSessionHasNoErrors();
 
@@ -149,8 +150,8 @@ class CtnReservationMessageTest extends TestCase
 
         $this->actingAs(User::factory()->create())
             ->get(route('backoffice.ctn-reservations.index', [
-                'date_from' => '2026-08-18',
-                'date_to' => '2026-08-20',
+                'date_from' => '18/08/2026',
+                'date_to' => '20/08/2026',
                 'status' => 'reserved',
             ]))
             ->assertOk()
@@ -166,7 +167,7 @@ class CtnReservationMessageTest extends TestCase
             'customer_phone' => '+216 22 333 444',
             'customer_message' => 'Message test',
             'journey_type' => 'one_way',
-            'departure_country' => 'Tunisia',
+            'departure_country' => 'Tunisia - Gênes',
             'outward_date' => '2026-08-20',
             'outward_passengers' => [1, 0, 0, 0, 0, 0],
             'return_passengers' => [0, 0, 0, 0, 0, 0],
@@ -187,7 +188,7 @@ class CtnReservationMessageTest extends TestCase
                         [
                             'last_name' => 'Passenger',
                             'first_name' => 'One',
-                            'date_of_birth' => '1990-01-01',
+                            'date_of_birth' => '01/01/1990',
                             'sexe' => 'male',
                             'passport_number' => 'P123456',
                             'passport_availability_date' => $passportAvailabilityDate,
@@ -200,6 +201,7 @@ class CtnReservationMessageTest extends TestCase
     private function modelPayload(array $overrides = []): array
     {
         return array_merge($this->validPayload(), [
+            'outward_date' => '2026-08-20',
             'return_passengers' => null,
             'vehicle_custom_dimensions' => false,
             'has_trailer' => false,

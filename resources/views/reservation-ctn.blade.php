@@ -1,12 +1,37 @@
-<x-layouts.app title="CTN Reservation">
+<x-layouts.app title="Ferry Reservation">
     <section class="ui-shell py-8 lg:py-10">
+        @php
+            $htmlDate = function (?string $value): string {
+                if (blank($value)) {
+                    return '';
+                }
+
+                foreach (['Y-m-d', 'd/m/Y'] as $format) {
+                    try {
+                        $date = \Carbon\CarbonImmutable::createFromFormat('!' . $format, $value);
+                    } catch (\InvalidArgumentException) {
+                        continue;
+                    }
+
+                    if ($date->format($format) === $value) {
+                        return $date->format('Y-m-d');
+                    }
+                }
+
+                return '';
+            };
+        @endphp
+
         <div class="mb-6 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-                <span class="ui-badge">CTN Form</span>
+                <span class="ui-badge">Booking Form</span>
                 <h1 class="mt-3 text-3xl font-bold text-slate-950">Ferry reservation with vehicle</h1>
                 <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Enter the itinerary, passengers, and vehicle information. Passenger details appear automatically based on the selected quantities.</p>
             </div>
-            <a href="{{ url('/') }}" class="ui-button-secondary">Back to home</a>
+            <a href="{{ url('/') }}" class="ui-button-secondary">
+                <x-icon name="chevron-left" />
+                <span>Back to home</span>
+            </a>
         </div>
 
         @if (session('status'))
@@ -87,25 +112,35 @@
                             </div>
 
                             <div>
-                                <p class="ui-label">Departure country</p>
-                                <div class="mt-2 grid gap-3 sm:grid-cols-3">
-                                    @foreach (['Italy', 'France', 'Tunisia'] as $country)
-                                        <label class="flex min-h-12 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-white">
-                                            <input type="radio" name="departure_country" value="{{ $country }}" class="sr-only" @checked($loop->first)>
-                                            {{ $country }}
-                                        </label>
+                                <label for="departure_country" class="ui-label">Departure country</label>
+                                <select id="departure_country" name="departure_country" required class="ui-input">
+                                    <option value="">Select</option>
+                                    @foreach ([
+                                        'Tunisia - Gênes',
+                                        'Tunisia - Civitavecchia',
+                                        'Tunisia - Palerme (Sicile)',
+                                        'Tunisia - Marseille',
+                                        'Gênes - Tunisia',
+                                        'Civitavecchia - Tunisia',
+                                        'Palerme - Tunisia',
+                                        'Marseille - Tunisia',
+                                    ] as $route)
+                                        <option value="{{ $route }}" @selected(old('departure_country') === $route)>{{ $route }}</option>
                                     @endforeach
-                                </div>
+                                </select>
+                                @error('departure_country')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <label for="outward_date" class="ui-label">Outward date</label>
-                                    <input id="outward_date" name="outward_date" type="date" required data-travel-date class="ui-input">
+                                    <input id="outward_date" name="outward_date" type="date" value="{{ $htmlDate(old('outward_date')) }}" required data-travel-date class="ui-input">
+                                    @error('outward_date')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div data-return-date>
                                     <label for="return_date" class="ui-label">Return date</label>
-                                    <input id="return_date" name="return_date" type="date" data-travel-date class="ui-input">
+                                    <input id="return_date" name="return_date" type="date" value="{{ $htmlDate(old('return_date')) }}" data-travel-date class="ui-input">
+                                    @error('return_date')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                                 </div>
                             </div>
                         </div>
@@ -191,10 +226,18 @@
                                 <input id="vehicle_model_other" name="vehicle_model_other" type="text" class="ui-input">
                             </div>
                             <div>
-                                <label for="vehicle_year" class="ui-label">Année du modèle</label>
+                                <label for="vehicle_year" class="ui-label">Model year</label>
                                 <select id="vehicle_year" name="vehicle_year" data-selected-year="{{ old('vehicle_year') }}" disabled class="ui-input">
                                     <option value="">Select year</option>
                                 </select>
+                                <label data-vehicle-year-manual-toggle-wrapper class="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-800" hidden>
+                                    <input id="vehicle_year_manual_toggle" type="checkbox" data-vehicle-year-manual-toggle class="h-4 w-4 rounded border-slate-300 text-primary">
+                                    Enter model year manually
+                                </label>
+                                <div data-vehicle-year-manual hidden>
+                                    <label for="vehicle_year_manual" class="ui-label mt-3">Enter model year</label>
+                                    <input id="vehicle_year_manual" name="vehicle_year" type="text" maxlength="4" inputmode="numeric" pattern="\d{4}" placeholder="YYYY" value="{{ old('vehicle_year') }}" disabled class="ui-input">
+                                </div>
                             </div>
                             <div class="ui-panel p-5">
                                 <label class="flex items-start gap-3 text-sm font-semibold text-slate-900">
@@ -203,17 +246,88 @@
                                 </label>
                                 <div data-vehicle-dimensions class="mt-4 grid gap-3" hidden>
                                     <div>
-                                        <label for="vehicle_length" class="ui-label">Longueur</label>
+                                        <label for="vehicle_length" class="ui-label">Length</label>
                                         <input id="vehicle_length" name="vehicle_length" type="number" step="0.05" min="0" value="4.50" disabled class="ui-input">
                                     </div>
                                     <div>
-                                        <label for="vehicle_width" class="ui-label">Largeur</label>
-                                        <input id="vehicle_width" name="vehicle_width" type="number" step="0.05" min="0" value="1.80" disabled class="ui-input">
-                                    </div>
-                                    <div>
-                                        <label for="vehicle_height" class="ui-label">Hauteur</label>
+                                        <label for="vehicle_height" class="ui-label">Height</label>
                                         <input id="vehicle_height" name="vehicle_height" type="number" step="0.05" min="0" value="1.70" disabled class="ui-input">
                                     </div>
+                                    <div>
+                                        <label for="vehicle_width" class="ui-label">Width</label>
+                                        <input id="vehicle_width" name="vehicle_width" type="number" step="0.05" min="0" value="1.80" disabled class="ui-input">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui-panel p-5">
+                                <label class="flex items-center gap-3 text-sm font-bold text-slate-950">
+                                    <input type="checkbox" name="has_roof_box" value="1" data-roof-box-toggle class="h-4 w-4 rounded border-slate-300 text-primary">
+                                    Roof box
+                                </label>
+                                <div data-roof-box-panel class="mt-5 space-y-4" hidden>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="flex items-start gap-2 text-sm font-semibold text-slate-800">
+                                                <input type="checkbox" name="has_roof_extra" value="1" data-extra-dimension-toggle data-extra-dimension-target="height" class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
+                                                Something on the roof, e.g. roof box, bikes etc?
+                                            </label>
+                                            <div data-extra-dimension-select-wrapper="height" class="mt-3" hidden>
+                                                <label for="roof_extra_height" class="ui-label">Extra height</label>
+                                                <select id="roof_extra_height" name="roof_extra_height" data-extra-dimension-select data-extra-dimension-target="height" disabled class="ui-input">
+                                                    @foreach ([['0.25', 'up to 0.25'], ['0.50', 'up to 0.5'], ['0.75', 'up to 0.75'], ['1.00', 'up to 1.00'], ['1.25', 'up to 1.25'], ['1.50', 'up to 1.50']] as [$value, $label])
+                                                        <option value="{{ $value }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="flex items-start gap-2 text-sm font-semibold text-slate-800">
+                                                <input type="checkbox" name="has_back_extra" value="1" data-extra-dimension-toggle data-extra-dimension-target="length" class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
+                                                Something on the back, e.g. bikes, luggage etc?
+                                            </label>
+                                            <div data-extra-dimension-select-wrapper="length" class="mt-3" hidden>
+                                                <label for="back_extra_length" class="ui-label">Extra length</label>
+                                                <select id="back_extra_length" name="back_extra_length" data-extra-dimension-select data-extra-dimension-target="length" disabled class="ui-input">
+                                                    @foreach ([['0.25', 'up to 0.25'], ['0.50', 'up to 0.5'], ['0.75', 'up to 0.75'], ['1.00', 'up to 1.00'], ['1.25', 'up to 1.25'], ['1.50', 'up to 1.50']] as [$value, $label])
+                                                        <option value="{{ $value }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ui-panel p-5">
+                                <label class="flex items-center gap-3 text-sm font-bold text-slate-950">
+                                    <input type="checkbox" name="has_trailer" value="1" data-trailer-toggle class="h-4 w-4 rounded border-slate-300 text-primary">
+                                    Trailer reservation
+                                </label>
+                                <div data-trailer-panel class="mt-5 space-y-4" hidden>
+                                    <div class="grid gap-3 sm:grid-cols-2">
+                                        <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                            <input type="checkbox" name="trailer_outward" value="1" checked>
+                                            Outward
+                                        </label>
+                                        <label data-trailer-return class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                            <input type="checkbox" name="trailer_return" value="1" checked>
+                                            Return
+                                        </label>
+                                    </div>
+                                    <div class="grid gap-2">
+                                        @foreach (['Trailer', 'Boat trailer', 'Caravan'] as $type)
+                                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                                <input type="radio" name="trailer_type" value="{{ $type }}" disabled>
+                                                {{ $type }}
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                                        <input name="trailer_length" type="number" step="0.01" min="0" placeholder="Length" class="ui-input mt-0">
+                                        <input name="trailer_height" type="number" step="0.01" min="0" placeholder="Height" class="ui-input mt-0">
+                                        <input name="trailer_width" type="number" step="0.01" min="0" placeholder="Width" class="ui-input mt-0">
+                                    </div>
+                                    <input name="trailer_license_number" type="text" placeholder="Trailer license plate" class="ui-input">
+                                    <input name="trailer_owner" type="text" placeholder="Trailer owner" class="ui-input">
                                 </div>
                             </div>
                             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
@@ -229,40 +343,6 @@
                         </div>
                     </section>
 
-                    <section class="ui-card p-5">
-                        <label class="flex items-center gap-3 text-sm font-bold text-slate-950">
-                            <input type="checkbox" name="has_trailer" value="1" data-trailer-toggle class="h-4 w-4 rounded border-slate-300 text-primary">
-                            Trailer reservation
-                        </label>
-                        <div data-trailer-panel class="mt-5 space-y-4" hidden>
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                    <input type="checkbox" name="trailer_outward" value="1" checked>
-                                    Outward
-                                </label>
-                                <label data-trailer-return class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                    <input type="checkbox" name="trailer_return" value="1" checked>
-                                    Return
-                                </label>
-                            </div>
-                            <div class="grid gap-2">
-                                @foreach (['Trailer', 'Boat trailer', 'Caravan'] as $type)
-                                    <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                        <input type="radio" name="trailer_type" value="{{ $type }}" disabled>
-                                        {{ $type }}
-                                    </label>
-                                @endforeach
-                            </div>
-                            <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                                <input name="trailer_length" type="number" step="0.01" min="0" placeholder="Length" class="ui-input mt-0">
-                                <input name="trailer_width" type="number" step="0.01" min="0" placeholder="Width" class="ui-input mt-0">
-                                <input name="trailer_height" type="number" step="0.01" min="0" placeholder="Height" class="ui-input mt-0">
-                            </div>
-                            <input name="trailer_license_number" type="text" placeholder="Trailer license plate" class="ui-input">
-                            <input name="trailer_owner" type="text" placeholder="Trailer owner" class="ui-input">
-                        </div>
-                    </section>
-
                     <section class="rounded-lg border border-amber-200 bg-amber-50 p-5 text-amber-950">
                         <h2 class="font-bold">Vehicle height confirmation</h2>
                         <p class="mt-2 text-sm leading-6">
@@ -275,7 +355,8 @@
                     </section>
 
                     <button type="submit" class="ui-button-primary w-full py-3">
-                        Send CTN request
+                        <x-icon name="ship" />
+                        <span>Send ferry request</span>
                     </button>
                 </aside>
             </div>
