@@ -29,10 +29,7 @@ class CtnReservationMessageTest extends TestCase
             'return_date' => null,
         ]);
         $this->assertSame('2026-08-20', CtnReservationMessage::first()->outward_date->format('Y-m-d'));
-        Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
-            return $mail->hasTo('amine.kcharem@gmail.com')
-                && $mail->reservation->customer_email === 'client@example.com';
-        });
+        Mail::assertNothingSent();
     }
 
     public function test_booking_notification_is_sent_to_configured_backoffice_recipients(): void
@@ -50,6 +47,106 @@ class CtnReservationMessageTest extends TestCase
             return $mail->hasTo('sales@example.com')
                 && $mail->hasTo('manager@example.com');
         });
+    }
+
+    public function test_vehicle_extra_equipment_fields_are_stored(): void
+    {
+        Mail::fake();
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload([
+            'vehicle_custom_dimensions' => '1',
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_roof_box' => '1',
+            'has_roof_extra' => '1',
+            'roof_extra_height' => '0.50',
+            'has_back_extra' => '1',
+            'back_extra_length' => '0.75',
+        ]))->assertRedirect(route('reservation.ctn', absolute: false));
+
+        $this->assertDatabaseHas('ctn_reservation_messages', [
+            'customer_email' => 'client@example.com',
+            'vehicle_custom_dimensions' => true,
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_roof_box' => true,
+            'has_roof_extra' => true,
+            'roof_extra_height' => '0.50',
+            'has_back_extra' => true,
+            'back_extra_length' => '0.75',
+        ]);
+    }
+
+    public function test_reservation_email_contains_all_submitted_form_sections(): void
+    {
+        $reservation = CtnReservationMessage::create($this->modelPayload([
+            'journey_type' => 'round_trip',
+            'return_date' => '2026-08-30',
+            'outward_passengers' => [1, 1, 0, 0, 0, 0],
+            'return_passengers' => [1, 0, 1, 0, 0, 0],
+            'passenger_details' => [
+                'outward' => [
+                    [
+                        [
+                            'last_name' => 'Passenger',
+                            'first_name' => 'One',
+                            'date_of_birth' => '1990-01-01',
+                            'sexe' => 'male',
+                            'passport_number' => 'P123456',
+                            'passport_availability_date' => '2030-01-01',
+                            'will_return' => 'no',
+                            'return_replacement' => [
+                                'last_name' => 'Return',
+                                'first_name' => 'Passenger',
+                                'date_of_birth' => '1992-02-02',
+                                'sexe' => 'female',
+                                'passport_number' => 'R654321',
+                                'passport_availability_date' => '2031-02-02',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'vehicle_year' => 2024,
+            'vehicle_custom_dimensions' => true,
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_roof_box' => true,
+            'has_roof_extra' => true,
+            'roof_extra_height' => '0.50',
+            'has_back_extra' => true,
+            'back_extra_length' => '0.75',
+            'has_trailer' => true,
+            'trailer_outward' => true,
+            'trailer_return' => true,
+            'trailer_type' => 'Caravan',
+            'trailer_length' => '3.50',
+            'trailer_width' => '1.80',
+            'trailer_height' => '1.70',
+            'trailer_license_number' => 'TR 456',
+            'trailer_owner' => 'Trailer Owner',
+        ]));
+
+        $html = (new FerryReservationReceived($reservation))->render();
+
+        $this->assertStringContainsString('Client CTN', $html);
+        $this->assertStringContainsString('Round trip', $html);
+        $this->assertStringContainsString('Passenger quantities', $html);
+        $this->assertStringContainsString('P123456', $html);
+        $this->assertStringContainsString('Different return passenger', $html);
+        $this->assertStringContainsString('R654321', $html);
+        $this->assertStringContainsString('Toyota', $html);
+        $this->assertStringContainsString('2024', $html);
+        $this->assertStringContainsString('Extra roof height', $html);
+        $this->assertStringContainsString('0.50', $html);
+        $this->assertStringContainsString('Extra back length', $html);
+        $this->assertStringContainsString('0.75', $html);
+        $this->assertStringContainsString('Caravan', $html);
+        $this->assertStringContainsString('TR 456', $html);
+        $this->assertStringContainsString('Height confirmation', $html);
     }
 
     public function test_empty_booking_notification_settings_disable_email_notification(): void

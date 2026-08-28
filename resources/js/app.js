@@ -1900,6 +1900,15 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             firstInvalidField.focus({ preventScroll: true });
             firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            return;
+        }
+
+        const submitButton = form.querySelector('[data-reservation-submit]');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.setAttribute('aria-busy', 'true');
         }
     });
 

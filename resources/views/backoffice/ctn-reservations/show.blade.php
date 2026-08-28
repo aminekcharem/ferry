@@ -216,6 +216,9 @@
                         <div><dt class="text-xs font-bold uppercase text-slate-500">License plate</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_license_number }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Owner</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_owner }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Dimensions</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_custom_dimensions ? "{$message->vehicle_length} x {$message->vehicle_width} x {$message->vehicle_height}" : 'Standard dimensions' }}</dd></div>
+                        <div><dt class="text-xs font-bold uppercase text-slate-500">Roof box</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_roof_box ? 'Yes' : 'No' }}</dd></div>
+                        <div><dt class="text-xs font-bold uppercase text-slate-500">Extra height</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_roof_extra ? $message->roof_extra_height : '-' }}</dd></div>
+                        <div><dt class="text-xs font-bold uppercase text-slate-500">Extra length</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_back_extra ? $message->back_extra_length : '-' }}</dd></div>
                     </dl>
                 </section>
 

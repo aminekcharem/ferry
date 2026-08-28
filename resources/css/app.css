@@ -55,7 +55,7 @@
     }
 
     .ui-button-primary {
-        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-primary-900/10 transition hover:bg-primary-700;
+        @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-primary-900/10 transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-primary;
     }
 
     .ui-button-secondary {
@@ -89,6 +89,23 @@
 
     .reservation-success-icon {
         animation: reservation-success-pop 520ms cubic-bezier(0.2, 0.9, 0.25, 1.25) both;
+    }
+
+    .reservation-submit-spinner {
+        @apply hidden h-5 w-5 rounded-full border-2 border-white/40 border-t-white;
+        animation: reservation-spinner 700ms linear infinite;
+    }
+
+    .reservation-submit-loader[aria-busy='true'] .reservation-submit-spinner {
+        @apply inline-block;
+    }
+
+    .reservation-submit-loader[aria-busy='true'] [data-submit-default] {
+        @apply hidden;
+    }
+
+    .reservation-submit-loader[aria-busy='true'] [data-submit-loading] {
+        @apply inline;
     }
 
     .backoffice-surface {
@@ -132,5 +149,11 @@
     100% {
         opacity: 1;
         transform: scale(1);
+    }
+}
+
+@keyframes reservation-spinner {
+    to {
+        transform: rotate(360deg);
     }
 }
