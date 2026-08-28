@@ -162,7 +162,11 @@
         </div>
 
         <p style="margin:20px 0 0;">
+            You can edit this reservation at any time by clicking the button below:
             <a href="{{ route('backoffice.ctn-reservations.show', $reservation) }}" style="display:inline-block;padding:12px 16px;border-radius:6px;background:#0f766e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Open in backoffice</a>
+        </p>
+        <p style="margin:20px 0 0;">
+            This email was sent automatically by the ferry booking system. Please do not reply to this email.
         </p>
     </div>
 </div>
