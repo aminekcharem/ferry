@@ -1226,9 +1226,18 @@ const setTodayAsMinimumDate = () => {
 };
 
 const fillSelect = (select, options, placeholder) => {
+    const selectedValue = select.dataset.selectedValue || '';
+
     select.replaceChildren(new Option(placeholder, ''));
-    options.forEach((option) => select.add(new Option(option, option)));
-    select.add(new Option('Other', 'Other'));
+    options.forEach((option) => {
+        const item = new Option(option, option);
+        item.selected = selectedValue === option;
+        select.add(item);
+    });
+
+    const other = new Option('Other', 'Other');
+    other.selected = selectedValue === 'Other';
+    select.add(other);
 };
 
 const getAvailableModelYears = (brand, model) => {
@@ -1342,9 +1351,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    form.noValidate = true;
     setTodayAsMinimumDate();
 
     const returnDate = form.querySelector('[data-return-date]');
+    const returnDateInput = form.querySelector('#return_date');
     const returnPassengers = form.querySelectorAll('[data-return-passenger]');
     const returnPassengerLabel = form.querySelector('[data-return-column-label]');
     const trailerReturn = form.querySelector('[data-trailer-return]');
@@ -1352,9 +1363,207 @@ document.addEventListener('DOMContentLoaded', () => {
     const passengerDetails = form.querySelector('[data-passenger-details]');
     const inputClass =
         'mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none focus:border-slate-950 focus:ring-2 focus:ring-slate-200';
+    const invalidFieldClasses = ['border-red-500', 'focus:border-red-600', 'focus:ring-red-100'];
+    const readJsonScript = (id) => {
+        const script = document.getElementById(id);
+
+        if (!script?.textContent.trim()) {
+            return {};
+        }
+
+        try {
+            return JSON.parse(script.textContent);
+        } catch {
+            return {};
+        }
+    };
+    const serverErrors = readJsonScript('ctn-validation-errors');
+    const oldInput = readJsonScript('ctn-old-input');
+    const oldFieldValues = {};
+    const flattenOldInput = (value, prefix = '') => {
+        if (value === null || typeof value !== 'object' || Array.isArray(value) && value.every((item) => item === null || typeof item !== 'object')) {
+            oldFieldValues[prefix] = value ?? '';
+
+            return;
+        }
+
+        Object.entries(value).forEach(([key, nestedValue]) => {
+            flattenOldInput(nestedValue, prefix ? `${prefix}[${key}]` : key);
+        });
+    };
+    Object.entries(oldInput).forEach(([key, value]) => flattenOldInput(value, key));
+
+    const fieldLabel = (field) => {
+        if (field.id) {
+            const label = form.querySelector(`label[for="${CSS.escape(field.id)}"]`);
+
+            if (label?.textContent.trim()) {
+                return label.textContent.trim();
+            }
+        }
+
+        return field.placeholder || field.name.replace(/[_\[\]]+/g, ' ').trim() || 'This field';
+    };
+
+    const validationMessageFor = (field) => {
+        const label = fieldLabel(field);
+
+        if (field.validity.valueMissing) {
+            return `${label} is required.`;
+        }
+
+        if (field.validity.typeMismatch) {
+            return `Enter a valid ${label.toLowerCase()}.`;
+        }
+
+        if (field.validity.patternMismatch) {
+            return `${label} has an invalid format.`;
+        }
+
+        if (field.validity.rangeUnderflow) {
+            return `${label} must be greater than or equal to ${field.min}.`;
+        }
+
+        if (field.validity.rangeOverflow) {
+            return `${label} must be less than or equal to ${field.max}.`;
+        }
+
+        if (field.validity.stepMismatch) {
+            return `${label} must match the requested step.`;
+        }
+
+        if (field.validity.tooLong) {
+            return `${label} is too long.`;
+        }
+
+        if (field.validity.customError) {
+            return field.validationMessage;
+        }
+
+        return field.validationMessage || `${label} is invalid.`;
+    };
+
+    const errorAnchorFor = (field) => {
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            return field.closest('label') || field;
+        }
+
+        return field;
+    };
+
+    const clearFieldError = (field) => {
+        field.removeAttribute('aria-invalid');
+        field.classList.remove(...invalidFieldClasses);
+
+        const describedBy = (field.getAttribute('aria-describedby') || '')
+            .split(/\s+/)
+            .filter((id) => id && id !== field.dataset.validationErrorId)
+            .join(' ');
+
+        if (describedBy) {
+            field.setAttribute('aria-describedby', describedBy);
+        } else {
+            field.removeAttribute('aria-describedby');
+        }
+
+        if (field.dataset.validationErrorId) {
+            document.getElementById(field.dataset.validationErrorId)?.remove();
+            delete field.dataset.validationErrorId;
+        }
+    };
+
+    const showFieldError = (field, message) => {
+        clearFieldError(field);
+
+        const anchor = errorAnchorFor(field);
+        const existingError = anchor.nextElementSibling;
+
+        if (existingError?.tagName === 'P' && existingError.textContent.trim() === message) {
+            const errorId = existingError.id || `${field.id || field.name.replace(/[^a-z0-9]+/gi, '-')}-error-existing`;
+
+            existingError.id = errorId;
+            field.dataset.validationErrorId = errorId;
+            field.setAttribute('aria-invalid', 'true');
+            field.setAttribute('aria-describedby', [field.getAttribute('aria-describedby'), errorId].filter(Boolean).join(' '));
+
+            if (field.matches('.ui-input') || field.tagName === 'SELECT' || field.tagName === 'TEXTAREA') {
+                field.classList.add(...invalidFieldClasses);
+            }
+
+            return;
+        }
+
+        const error = document.createElement('p');
+        const errorId = `${field.id || field.name.replace(/[^a-z0-9]+/gi, '-')}-error-${Math.random().toString(36).slice(2, 8)}`;
+
+        error.id = errorId;
+        error.className = 'mt-2 text-sm font-semibold text-red-600';
+        error.dataset.validationError = '';
+        error.textContent = message;
+
+        field.dataset.validationErrorId = errorId;
+        field.setAttribute('aria-invalid', 'true');
+        field.setAttribute('aria-describedby', [field.getAttribute('aria-describedby'), errorId].filter(Boolean).join(' '));
+
+        if (field.matches('.ui-input') || field.tagName === 'SELECT' || field.tagName === 'TEXTAREA') {
+            field.classList.add(...invalidFieldClasses);
+        }
+
+        anchor.insertAdjacentElement('afterend', error);
+    };
+
+    const errorKeysFor = (field) => {
+        const keys = [field.name];
+        const bracketKey = field.name.replace(/\]/g, '').replace(/\[/g, '.');
+
+        keys.push(bracketKey);
+
+        if (field.name.endsWith('[]')) {
+            const fields = [...form.querySelectorAll(`[name="${CSS.escape(field.name)}"]`)];
+            const index = fields.indexOf(field);
+            keys.push(`${field.name.slice(0, -2)}.${index}`);
+        }
+
+        return keys;
+    };
+
+    const renderServerErrors = () => {
+        form.querySelectorAll('input, select, textarea').forEach((field) => {
+            if (field.disabled || field.type === 'hidden' || field.closest('[hidden]')) {
+                return;
+            }
+
+            const errorKey = errorKeysFor(field).find((key) => serverErrors[key]?.length);
+
+            if (errorKey) {
+                showFieldError(field, serverErrors[errorKey][0]);
+            }
+        });
+    };
+
+    const validateVisibleFields = () => {
+        let firstInvalidField = null;
+
+        form.querySelectorAll('[data-validation-error]').forEach((error) => error.remove());
+        form.querySelectorAll('input, select, textarea').forEach(clearFieldError);
+        validateDateInputs();
+
+        form.querySelectorAll('input, select, textarea').forEach((field) => {
+            if (field.disabled || field.type === 'hidden' || field.closest('[hidden]')) {
+                return;
+            }
+
+            if (!field.checkValidity()) {
+                firstInvalidField ||= field;
+                showFieldError(field, validationMessageFor(field));
+            }
+        });
+
+        return firstInvalidField;
+    };
 
     const getPassengerDetailValues = () => {
-        const values = {};
+        const values = { ...oldFieldValues };
         passengerDetails.querySelectorAll('input, select').forEach((field) => {
             values[field.name] = field.value;
         });
@@ -1389,6 +1598,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         }
 
+        if (input.disabled) {
+            input.setCustomValidity('');
+
+            return true;
+        }
+
         if (input.value && input.min && input.value < input.min) {
             input.setCustomValidity('Choose a later date.');
 
@@ -1415,7 +1630,7 @@ document.addEventListener('DOMContentLoaded', () => {
             valid = validateDateInput(input) && valid;
         });
 
-        if (outwardInput?.value && returnInput?.value) {
+        if (!returnInput?.disabled && outwardInput?.value && returnInput?.value) {
             if (returnInput.value < outwardInput.value) {
                 returnInput.setCustomValidity('Return date must be after or equal to outward date.');
                 valid = false;
@@ -1602,8 +1817,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         returnPassengers.forEach((element) => {
             element.hidden = !isRoundTrip;
+            element.querySelectorAll('input, button').forEach((field) => {
+                field.disabled = !isRoundTrip;
+            });
         });
-        form.querySelector('#return_date').required = isRoundTrip;
+        if (returnDateInput) {
+            returnDateInput.required = isRoundTrip;
+            returnDateInput.disabled = !isRoundTrip;
+            returnDateInput.setCustomValidity('');
+        }
         renderPassengerDetails();
     };
 
@@ -1631,12 +1853,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target instanceof HTMLInputElement) {
             validateDateInput(event.target);
         }
+
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLTextAreaElement) {
+            clearFieldError(event.target);
+        }
+    });
+
+    form.addEventListener('change', (event) => {
+        if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLTextAreaElement) {
+            clearFieldError(event.target);
+        }
     });
 
     form.addEventListener('submit', (event) => {
-        if (!validateDateInputs()) {
+        const firstInvalidField = validateVisibleFields();
+
+        if (firstInvalidField) {
             event.preventDefault();
-            form.reportValidity();
+            firstInvalidField.focus({ preventScroll: true });
+            firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
 
@@ -1667,6 +1902,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearManualInput = form.querySelector('#vehicle_year_manual');
     const otherBrand = form.querySelector('[data-other-brand]');
     const otherModel = form.querySelector('[data-other-model]');
+    const otherBrandInput = form.querySelector('#vehicle_brand_other');
+    const otherModelInput = form.querySelector('#vehicle_model_other');
     const vehicleLengthInput = form.querySelector('[name="vehicle_length"]');
     const vehicleWidthInput = form.querySelector('[name="vehicle_width"]');
     const vehicleHeightInput = form.querySelector('[name="vehicle_height"]');
@@ -1734,6 +1971,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const dimensions = getVehicleDimensions(brand, model, year);
         setBaseVehicleDimensions(dimensions);
+
+        if (getExactVehicleDimensions(brand, model)) {
+            return;
+        }
 
         if (!year) {
             return;
@@ -1825,15 +2066,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const syncOtherVehicleFields = () => {
+        const brandIsOther = brandSelect.value === 'Other';
+        const modelIsOther = brandIsOther || modelSelect.value === 'Other';
+
+        otherBrand.hidden = !brandIsOther;
+        otherBrandInput.disabled = !brandIsOther;
+        otherBrandInput.required = brandIsOther;
+
+        otherModel.hidden = !modelIsOther;
+        otherModelInput.disabled = !modelIsOther;
+        otherModelInput.required = modelIsOther;
+    };
+
+    const applyStoredSelectValues = () => {
+        form.querySelectorAll('select[data-selected-value]').forEach((select) => {
+            if (select.dataset.selectedValue && [...select.options].some((option) => option.value === select.dataset.selectedValue)) {
+                select.value = select.dataset.selectedValue;
+            }
+        });
+    };
+
     fillYearSelect(yearSelect);
     syncManualVehicleYear(false);
     fillSelect(brandSelect, Object.keys(carCatalog).sort(), 'Select brand');
+    if (brandSelect.value) {
+        modelSelect.disabled = false;
+        fillSelect(modelSelect, brandSelect.value === 'Other' ? [] : carCatalog[brandSelect.value] || [], 'Select model');
+        if (brandSelect.value === 'Other') {
+            modelSelect.value = 'Other';
+        }
+        if (modelSelect.value) {
+            loadAvailableModelYears();
+        }
+    }
+    applyStoredSelectValues();
+    syncOtherVehicleFields();
     applyVehicleDimensions();
 
     brandSelect.addEventListener('change', () => {
         const brand = brandSelect.value;
         const brandIsOther = brand === 'Other';
-        otherBrand.hidden = !brandIsOther;
         modelSelect.disabled = !brand;
         yearSelect.value = '';
         yearSelect.dataset.selectedYear = '';
@@ -1843,12 +2116,15 @@ document.addEventListener('DOMContentLoaded', () => {
         fillYearSelect(yearSelect);
         syncManualVehicleYear(false);
         fillSelect(modelSelect, brandIsOther ? [] : carCatalog[brand] || [], 'Select model');
-        otherModel.hidden = !brandIsOther;
+        if (brandIsOther) {
+            modelSelect.value = 'Other';
+        }
+        syncOtherVehicleFields();
         applyVehicleDimensions();
     });
 
     modelSelect.addEventListener('change', () => {
-        otherModel.hidden = modelSelect.value !== 'Other';
+        syncOtherVehicleFields();
         yearSelect.value = '';
         yearSelect.dataset.selectedYear = '';
         yearManualToggle.checked = false;
@@ -1947,18 +2223,31 @@ document.addEventListener('DOMContentLoaded', () => {
     roofBoxToggle.addEventListener('change', syncRoofBox);
     extraDimensionToggles.forEach((toggle) => toggle.addEventListener('change', syncExtraDimensionControls));
     extraDimensionSelects.forEach((select) => select.addEventListener('change', applyExtraDimensions));
+    applyStoredSelectValues();
     syncRoofBox();
 
     const trailerToggle = form.querySelector('[data-trailer-toggle]');
     const trailerPanel = form.querySelector('[data-trailer-panel]');
     const trailerTypeRadios = form.querySelectorAll('[name="trailer_type"]');
-    trailerToggle.addEventListener('change', () => {
-        trailerPanel.hidden = !trailerToggle.checked;
+    const trailerDimensionInputs = form.querySelectorAll('[name="trailer_length"], [name="trailer_height"], [name="trailer_width"]');
+    const syncTrailer = () => {
+        const hasTrailer = trailerToggle.checked;
+        trailerPanel.hidden = !hasTrailer;
+        const hasSelectedTrailerType = [...trailerTypeRadios].some((radio) => radio.checked);
+
         trailerTypeRadios.forEach((radio, index) => {
-            radio.disabled = !trailerToggle.checked;
-            radio.checked = trailerToggle.checked && index === 0;
+            radio.disabled = !hasTrailer;
+            radio.required = hasTrailer;
+            radio.checked = hasTrailer && (hasSelectedTrailerType ? radio.checked : index === 0);
         });
-    });
+        trailerDimensionInputs.forEach((input) => {
+            input.disabled = !hasTrailer;
+            input.required = hasTrailer;
+        });
+    };
+    trailerToggle.addEventListener('change', syncTrailer);
+    syncTrailer();
 
     renderPassengerDetails();
+    renderServerErrors();
 });
