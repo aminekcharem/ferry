@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ApplicationSettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class CtnReservationMessageTest extends TestCase
@@ -76,6 +77,33 @@ class CtnReservationMessageTest extends TestCase
             'roof_extra_height' => '0.50',
             'has_back_extra' => true,
             'back_extra_length' => '0.75',
+        ]);
+    }
+
+    public function test_reservation_submission_still_works_before_vehicle_extra_equipment_migration_runs(): void
+    {
+        Mail::fake();
+        Schema::shouldReceive('hasColumn')
+            ->with('ctn_reservation_messages', \Mockery::type('string'))
+            ->andReturn(false);
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload([
+            'vehicle_custom_dimensions' => '1',
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_roof_box' => '1',
+            'has_roof_extra' => '1',
+            'roof_extra_height' => '0.50',
+            'has_back_extra' => '1',
+            'back_extra_length' => '0.75',
+        ]))->assertRedirect(route('reservation.ctn', absolute: false));
+
+        $this->assertDatabaseHas('ctn_reservation_messages', [
+            'customer_email' => 'client@example.com',
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
         ]);
     }
 
