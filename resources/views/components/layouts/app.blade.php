@@ -28,6 +28,10 @@
                                 <span>Dashboard</span>
                             </a>
                             @if (auth()->user()->isAdmin())
+                                <a class="ui-button-secondary" href="{{ route('backoffice.settings.edit') }}">
+                                    <x-icon name="settings" />
+                                    <span>Settings</span>
+                                </a>
                                 <a class="ui-button-secondary" href="{{ route('backoffice.users.index') }}">
                                     <x-icon name="users" />
                                     <span>Users</span>

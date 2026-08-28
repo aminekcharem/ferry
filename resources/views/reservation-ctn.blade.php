@@ -35,9 +35,30 @@
         </div>
 
         @if (session('status'))
-            <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                {{ session('status') }}
-            </div>
+            <dialog class="ui-modal reservation-success-modal w-[min(92vw,28rem)] rounded-lg border border-emerald-100 bg-white p-0 text-left shadow-xl" data-reservation-success-modal aria-labelledby="reservation-success-title">
+                <div class="relative overflow-hidden p-6 text-center sm:p-7">
+                    <button type="button" class="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" data-reservation-success-close aria-label="Close confirmation">
+                        <x-icon name="x" class="h-5 w-5" />
+                    </button>
+
+                    <div class="reservation-success-icon mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/70">
+                        <x-icon name="check" class="h-8 w-8" />
+                    </div>
+
+                    <h2 id="reservation-success-title" class="mt-5 text-xl font-bold text-slate-950">Request sent</h2>
+                    <p class="mt-3 text-sm font-semibold leading-6 text-emerald-700">
+                        {{ session('status') }}
+                    </p>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">
+                        Our team will review the reservation details and contact you shortly.
+                    </p>
+
+                    <button type="button" class="ui-button-primary mt-6 w-full" data-reservation-success-close>
+                        <x-icon name="check" />
+                        <span>Done</span>
+                    </button>
+                </div>
+            </dialog>
         @endif
 
         @if ($errors->any())

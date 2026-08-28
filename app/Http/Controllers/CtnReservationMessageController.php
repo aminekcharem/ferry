@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCtnReservationMessageRequest;
 use App\Http\Requests\UpdateCtnReservationStatusRequest;
 use App\Mail\FerryReservationReceived;
 use App\Models\CtnReservationMessage;
+use App\Services\ApplicationSettingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,8 @@ use Illuminate\View\View;
 
 class CtnReservationMessageController extends Controller
 {
+    public function __construct(private readonly ApplicationSettingService $settings) {}
+
     public function index(Request $request): View|RedirectResponse
     {
         $filters = $request->validate([
@@ -120,14 +123,14 @@ class CtnReservationMessageController extends Controller
 
     private function sendBookingNotification(CtnReservationMessage $reservation): void
     {
-        $recipient = config('ferry.booking_notification_email');
+        $recipients = $this->settings->bookingNotificationEmails();
 
-        if (! $recipient) {
+        if ($recipients === []) {
             return;
         }
 
         try {
-            Mail::to($recipient)->send(new FerryReservationReceived($reservation));
+            Mail::to($recipients)->send(new FerryReservationReceived($reservation));
         } catch (\Throwable $exception) {
             report($exception);
         }

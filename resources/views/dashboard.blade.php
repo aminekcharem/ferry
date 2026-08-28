@@ -14,6 +14,10 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 @if (auth()->user()->isAdmin())
+                    <a href="{{ route('backoffice.settings.edit') }}" class="ui-button-secondary">
+                        <x-icon name="settings" />
+                        <span>Settings</span>
+                    </a>
                     <a href="{{ route('backoffice.users.index') }}" class="ui-button-secondary">
                         <x-icon name="users" />
                         <span>Manage users</span>
@@ -55,6 +59,19 @@
         </div>
 
         @if (auth()->user()->isAdmin())
+            <div class="mt-6 ui-card backoffice-card p-6">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-950">Email notifications</h2>
+                        <p class="mt-2 text-sm leading-6 text-slate-600">Choose the recipients alerted when a new ferry request arrives.</p>
+                    </div>
+                    <a href="{{ route('backoffice.settings.edit') }}" class="ui-button-secondary">
+                        <x-icon name="settings" />
+                        <span>Configure</span>
+                    </a>
+                </div>
+            </div>
+
             <div class="mt-6 ui-card backoffice-card p-6">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>

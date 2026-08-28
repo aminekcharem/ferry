@@ -1326,6 +1326,34 @@ const fetchVehicleSpecification = async (endpoint, parameters) => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    const reservationSuccessModal = document.querySelector('[data-reservation-success-modal]');
+
+    if (reservationSuccessModal) {
+        const closeReservationSuccessModal = () => {
+            if (typeof reservationSuccessModal.close === 'function') {
+                reservationSuccessModal.close();
+            } else {
+                reservationSuccessModal.removeAttribute('open');
+            }
+        };
+
+        if (typeof reservationSuccessModal.showModal === 'function' && !reservationSuccessModal.open) {
+            reservationSuccessModal.showModal();
+        } else {
+            reservationSuccessModal.setAttribute('open', '');
+        }
+
+        reservationSuccessModal.querySelectorAll('[data-reservation-success-close]').forEach((button) => {
+            button.addEventListener('click', closeReservationSuccessModal);
+        });
+
+        reservationSuccessModal.addEventListener('click', (event) => {
+            if (event.target === reservationSuccessModal) {
+                closeReservationSuccessModal();
+            }
+        });
+    }
+
     const statusModal = document.querySelector('[data-status-modal]');
 
     if (statusModal) {

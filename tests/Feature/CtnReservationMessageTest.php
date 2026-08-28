@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Mail\FerryReservationReceived;
+use App\Models\ApplicationSetting;
 use App\Models\CtnReservationMessage;
 use App\Models\User;
+use App\Services\ApplicationSettingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -32,6 +34,38 @@ class CtnReservationMessageTest extends TestCase
                 && $mail->reservation->customer_email === 'client@example.com';
         });
     }
+
+    public function test_booking_notification_is_sent_to_configured_backoffice_recipients(): void
+    {
+        Mail::fake();
+        ApplicationSetting::create([
+            'key' => ApplicationSettingService::BOOKING_NOTIFICATION_EMAILS,
+            'value' => 'sales@example.com, manager@example.com',
+        ]);
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload())
+            ->assertRedirect(route('reservation.ctn', absolute: false));
+
+        Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            return $mail->hasTo('sales@example.com')
+                && $mail->hasTo('manager@example.com');
+        });
+    }
+
+    public function test_empty_booking_notification_settings_disable_email_notification(): void
+    {
+        Mail::fake();
+        ApplicationSetting::create([
+            'key' => ApplicationSettingService::BOOKING_NOTIFICATION_EMAILS,
+            'value' => '',
+        ]);
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload())
+            ->assertRedirect(route('reservation.ctn', absolute: false));
+
+        Mail::assertNothingSent();
+    }
+
     public function test_passport_availability_date_must_be_after_today(): void
     {
         $this->travelTo('2026-08-22');
@@ -66,7 +100,6 @@ class CtnReservationMessageTest extends TestCase
 
         $this->travelBack();
     }
-
 
     public function test_backoffice_ctn_reservations_requires_authentication(): void
     {
@@ -206,6 +239,7 @@ class CtnReservationMessageTest extends TestCase
             ],
         ]);
     }
+
     private function modelPayload(array $overrides = []): array
     {
         return array_merge($this->validPayload(), [
