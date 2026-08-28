@@ -46,4 +46,22 @@ class VehicleSpecificationTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('year');
     }
+
+    public function test_dimensions_lookup_accepts_manual_year_for_known_catalog_model(): void
+    {
+        Cache::flush();
+        Http::fake([
+            'https://vpic.nhtsa.dot.gov/*' => Http::response([
+                'Results' => [],
+            ]),
+        ]);
+
+        $this->getJson(route('vehicle-specifications.dimensions', [
+            'brand' => 'Abarth',
+            'model' => '124 Spider',
+            'year' => 2023,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('dimensions', null);
+    }
 }

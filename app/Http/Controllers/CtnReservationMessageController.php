@@ -4,15 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCtnReservationMessageRequest;
 use App\Http\Requests\UpdateCtnReservationStatusRequest;
+use App\Mail\FerryReservationReceived;
 use App\Models\CtnReservationMessage;
+use App\Services\ApplicationSettingService;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\View\View;
 
 class CtnReservationMessageController extends Controller
 {
+    public function __construct(private readonly ApplicationSettingService $settings) {}
+
     public function index(Request $request): View|RedirectResponse
     {
         $filters = $request->validate([
@@ -88,7 +93,7 @@ class CtnReservationMessageController extends Controller
         $hasTrailer = $request->boolean('has_trailer');
         $hasVehicleDimensions = $request->boolean('vehicle_custom_dimensions');
 
-        CtnReservationMessage::create(array_merge($data, [
+        $reservation = CtnReservationMessage::create(array_merge($data, [
             'return_date' => $isRoundTrip ? ($data['return_date'] ?? null) : null,
             'return_passengers' => $isRoundTrip ? ($data['return_passengers'] ?? null) : null,
             'vehicle_custom_dimensions' => $hasVehicleDimensions,
@@ -109,9 +114,26 @@ class CtnReservationMessageController extends Controller
             'user_agent' => $request->userAgent(),
         ]));
 
+        $this->sendBookingNotification($reservation);
+
         return redirect()
             ->route('reservation.ctn')
             ->with('status', 'Your ferry reservation request has been sent.');
+    }
+
+    private function sendBookingNotification(CtnReservationMessage $reservation): void
+    {
+        $recipients = $this->settings->bookingNotificationEmails();
+
+        if ($recipients === []) {
+            return;
+        }
+
+        try {
+            Mail::to($recipients)->send(new FerryReservationReceived($reservation));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function dateFilterForQuery(?string $date): ?string

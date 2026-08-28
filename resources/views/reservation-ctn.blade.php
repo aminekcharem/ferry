@@ -35,9 +35,30 @@
         </div>
 
         @if (session('status'))
-            <div class="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                {{ session('status') }}
-            </div>
+            <dialog class="ui-modal reservation-success-modal w-[min(92vw,28rem)] rounded-lg border border-emerald-100 bg-white p-0 text-left shadow-xl" data-reservation-success-modal aria-labelledby="reservation-success-title">
+                <div class="relative overflow-hidden p-6 text-center sm:p-7">
+                    <button type="button" class="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" data-reservation-success-close aria-label="Close confirmation">
+                        <x-icon name="x" class="h-5 w-5" />
+                    </button>
+
+                    <div class="reservation-success-icon mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/70">
+                        <x-icon name="check" class="h-8 w-8" />
+                    </div>
+
+                    <h2 id="reservation-success-title" class="mt-5 text-xl font-bold text-slate-950">Request sent</h2>
+                    <p class="mt-3 text-sm font-semibold leading-6 text-emerald-700">
+                        {{ session('status') }}
+                    </p>
+                    <p class="mt-2 text-sm leading-6 text-slate-600">
+                        Our team will review the reservation details and contact you shortly.
+                    </p>
+
+                    <button type="button" class="ui-button-primary mt-6 w-full" data-reservation-success-close>
+                        <x-icon name="check" />
+                        <span>Done</span>
+                    </button>
+                </div>
+            </dialog>
         @endif
 
         @if ($errors->any())
@@ -101,11 +122,11 @@
                                 <p class="ui-label">Trip type</p>
                                 <div class="mt-2 grid gap-3 sm:grid-cols-2">
                                     <label class="flex min-h-12 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-white">
-                                        <input type="radio" name="journey_type" value="one_way" class="sr-only" checked>
+                                        <input type="radio" name="journey_type" value="one_way" class="sr-only" @checked(old('journey_type', 'one_way') === 'one_way')>
                                         One way
                                     </label>
                                     <label class="flex min-h-12 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-white">
-                                        <input type="radio" name="journey_type" value="round_trip" class="sr-only">
+                                        <input type="radio" name="journey_type" value="round_trip" class="sr-only" @checked(old('journey_type') === 'round_trip')>
                                         Round trip
                                     </label>
                                 </div>
@@ -176,12 +197,12 @@
                                     <span class="text-sm font-semibold text-slate-800">{{ $passenger }}</span>
                                     <div class="flex items-center gap-2">
                                         <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove passenger">-</button>
-                                        <input type="number" name="outward_passengers[]" min="0" value="0" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
+                                        <input type="number" name="outward_passengers[]" min="0" value="{{ old('outward_passengers.' . $loop->index, 0) }}" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
                                         <button type="button" data-counter-plus class="h-9 w-9 rounded-md bg-primary text-lg font-bold text-white hover:bg-primary-700" aria-label="Add passenger">+</button>
                                     </div>
                                     <div data-return-passenger class="flex items-center gap-2">
                                         <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove return passenger">-</button>
-                                        <input type="number" name="return_passengers[]" min="0" value="0" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
+                                        <input type="number" name="return_passengers[]" min="0" value="{{ old('return_passengers.' . $loop->index, 0) }}" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
                                         <button type="button" data-counter-plus class="h-9 w-9 rounded-md bg-primary text-lg font-bold text-white hover:bg-primary-700" aria-label="Add return passenger">+</button>
                                     </div>
                                 </div>
@@ -207,23 +228,23 @@
                         <div class="mt-5 space-y-4">
                             <div>
                                 <label for="vehicle_brand" class="ui-label">Brand</label>
-                                <select id="vehicle_brand" name="vehicle_brand" required class="ui-input">
+                                <select id="vehicle_brand" name="vehicle_brand" required data-selected-value="{{ old('vehicle_brand') }}" class="ui-input">
                                     <option value="">Select</option>
                                 </select>
                             </div>
                             <div data-other-brand hidden>
                                 <label for="vehicle_brand_other" class="ui-label">Other brand</label>
-                                <input id="vehicle_brand_other" name="vehicle_brand_other" type="text" class="ui-input">
+                                <input id="vehicle_brand_other" name="vehicle_brand_other" type="text" value="{{ old('vehicle_brand_other') }}" class="ui-input">
                             </div>
                             <div>
                                 <label for="vehicle_model" class="ui-label">Model</label>
-                                <select id="vehicle_model" name="vehicle_model" required disabled class="ui-input">
+                                <select id="vehicle_model" name="vehicle_model" required disabled data-selected-value="{{ old('vehicle_model') }}" class="ui-input">
                                     <option value="">Select</option>
                                 </select>
                             </div>
                             <div data-other-model hidden>
                                 <label for="vehicle_model_other" class="ui-label">Other model</label>
-                                <input id="vehicle_model_other" name="vehicle_model_other" type="text" class="ui-input">
+                                <input id="vehicle_model_other" name="vehicle_model_other" type="text" value="{{ old('vehicle_model_other') }}" class="ui-input">
                             </div>
                             <div>
                                 <label for="vehicle_year" class="ui-label">Model year</label>
@@ -241,39 +262,39 @@
                             </div>
                             <div class="ui-panel p-5">
                                 <label class="flex items-start gap-3 text-sm font-semibold text-slate-900">
-                                    <input type="checkbox" name="vehicle_custom_dimensions" value="1" data-vehicle-dimensions-toggle class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
+                                    <input type="checkbox" name="vehicle_custom_dimensions" value="1" data-vehicle-dimensions-toggle @checked(old('vehicle_custom_dimensions')) class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
                                     Vehicle dimensions differ from the standard values
                                 </label>
                                 <div data-vehicle-dimensions class="mt-4 grid gap-3" hidden>
                                     <div>
                                         <label for="vehicle_length" class="ui-label">Length</label>
-                                        <input id="vehicle_length" name="vehicle_length" type="number" step="0.05" min="0" value="4.50" disabled class="ui-input">
+                                        <input id="vehicle_length" name="vehicle_length" type="number" step="0.05" min="0" value="{{ old('vehicle_length', '4.50') }}" disabled class="ui-input">
                                     </div>
                                     <div>
                                         <label for="vehicle_height" class="ui-label">Height</label>
-                                        <input id="vehicle_height" name="vehicle_height" type="number" step="0.05" min="0" value="1.70" disabled class="ui-input">
+                                        <input id="vehicle_height" name="vehicle_height" type="number" step="0.05" min="0" value="{{ old('vehicle_height', '1.70') }}" disabled class="ui-input">
                                     </div>
                                     <div>
                                         <label for="vehicle_width" class="ui-label">Width</label>
-                                        <input id="vehicle_width" name="vehicle_width" type="number" step="0.05" min="0" value="1.80" disabled class="ui-input">
+                                        <input id="vehicle_width" name="vehicle_width" type="number" step="0.05" min="0" value="{{ old('vehicle_width', '1.80') }}" disabled class="ui-input">
                                     </div>
                                 </div>
                             </div>
                             <div class="ui-panel p-5">
                                 <label class="flex items-center gap-3 text-sm font-bold text-slate-950">
-                                    <input type="checkbox" name="has_roof_box" value="1" data-roof-box-toggle class="h-4 w-4 rounded border-slate-300 text-primary">
+                                    <input type="checkbox" name="has_roof_box" value="1" data-roof-box-toggle @checked(old('has_roof_box')) class="h-4 w-4 rounded border-slate-300 text-primary">
                                     Roof box
                                 </label>
                                 <div data-roof-box-panel class="mt-5 space-y-4" hidden>
                                     <div class="space-y-4">
                                         <div>
                                             <label class="flex items-start gap-2 text-sm font-semibold text-slate-800">
-                                                <input type="checkbox" name="has_roof_extra" value="1" data-extra-dimension-toggle data-extra-dimension-target="height" class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
+                                                <input type="checkbox" name="has_roof_extra" value="1" data-extra-dimension-toggle data-extra-dimension-target="height" @checked(old('has_roof_extra')) class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
                                                 Something on the roof, e.g. roof box, bikes etc?
                                             </label>
                                             <div data-extra-dimension-select-wrapper="height" class="mt-3" hidden>
                                                 <label for="roof_extra_height" class="ui-label">Extra height</label>
-                                                <select id="roof_extra_height" name="roof_extra_height" data-extra-dimension-select data-extra-dimension-target="height" disabled class="ui-input">
+                                                <select id="roof_extra_height" name="roof_extra_height" data-extra-dimension-select data-extra-dimension-target="height" data-selected-value="{{ old('roof_extra_height') }}" disabled class="ui-input">
                                                     @foreach ([['0.25', 'up to 0.25'], ['0.50', 'up to 0.5'], ['0.75', 'up to 0.75'], ['1.00', 'up to 1.00'], ['1.25', 'up to 1.25'], ['1.50', 'up to 1.50']] as [$value, $label])
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
@@ -282,12 +303,12 @@
                                         </div>
                                         <div>
                                             <label class="flex items-start gap-2 text-sm font-semibold text-slate-800">
-                                                <input type="checkbox" name="has_back_extra" value="1" data-extra-dimension-toggle data-extra-dimension-target="length" class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
+                                                <input type="checkbox" name="has_back_extra" value="1" data-extra-dimension-toggle data-extra-dimension-target="length" @checked(old('has_back_extra')) class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
                                                 Something on the back, e.g. bikes, luggage etc?
                                             </label>
                                             <div data-extra-dimension-select-wrapper="length" class="mt-3" hidden>
                                                 <label for="back_extra_length" class="ui-label">Extra length</label>
-                                                <select id="back_extra_length" name="back_extra_length" data-extra-dimension-select data-extra-dimension-target="length" disabled class="ui-input">
+                                                <select id="back_extra_length" name="back_extra_length" data-extra-dimension-select data-extra-dimension-target="length" data-selected-value="{{ old('back_extra_length') }}" disabled class="ui-input">
                                                     @foreach ([['0.25', 'up to 0.25'], ['0.50', 'up to 0.5'], ['0.75', 'up to 0.75'], ['1.00', 'up to 1.00'], ['1.25', 'up to 1.25'], ['1.50', 'up to 1.50']] as [$value, $label])
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
@@ -299,45 +320,45 @@
                             </div>
                             <div class="ui-panel p-5">
                                 <label class="flex items-center gap-3 text-sm font-bold text-slate-950">
-                                    <input type="checkbox" name="has_trailer" value="1" data-trailer-toggle class="h-4 w-4 rounded border-slate-300 text-primary">
+                                    <input type="checkbox" name="has_trailer" value="1" data-trailer-toggle @checked(old('has_trailer')) class="h-4 w-4 rounded border-slate-300 text-primary">
                                     Trailer reservation
                                 </label>
                                 <div data-trailer-panel class="mt-5 space-y-4" hidden>
                                     <div class="grid gap-3 sm:grid-cols-2">
                                         <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                            <input type="checkbox" name="trailer_outward" value="1" checked>
+                                            <input type="checkbox" name="trailer_outward" value="1" @checked(old('trailer_outward', '1'))>
                                             Outward
                                         </label>
                                         <label data-trailer-return class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                            <input type="checkbox" name="trailer_return" value="1" checked>
+                                            <input type="checkbox" name="trailer_return" value="1" @checked(old('trailer_return', '1'))>
                                             Return
                                         </label>
                                     </div>
                                     <div class="grid gap-2">
                                         @foreach (['Trailer', 'Boat trailer', 'Caravan'] as $type)
                                             <label class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                                <input type="radio" name="trailer_type" value="{{ $type }}" disabled>
+                                                <input type="radio" name="trailer_type" value="{{ $type }}" @checked(old('trailer_type') === $type) disabled>
                                                 {{ $type }}
                                             </label>
                                         @endforeach
                                     </div>
                                     <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                                        <input name="trailer_length" type="number" step="0.01" min="0" placeholder="Length" class="ui-input mt-0">
-                                        <input name="trailer_height" type="number" step="0.01" min="0" placeholder="Height" class="ui-input mt-0">
-                                        <input name="trailer_width" type="number" step="0.01" min="0" placeholder="Width" class="ui-input mt-0">
+                                        <input name="trailer_length" type="number" step="0.01" min="0" value="{{ old('trailer_length') }}" placeholder="Length" class="ui-input mt-0">
+                                        <input name="trailer_height" type="number" step="0.01" min="0" value="{{ old('trailer_height') }}" placeholder="Height" class="ui-input mt-0">
+                                        <input name="trailer_width" type="number" step="0.01" min="0" value="{{ old('trailer_width') }}" placeholder="Width" class="ui-input mt-0">
                                     </div>
-                                    <input name="trailer_license_number" type="text" placeholder="Trailer license plate" class="ui-input">
-                                    <input name="trailer_owner" type="text" placeholder="Trailer owner" class="ui-input">
+                                    <input name="trailer_license_number" type="text" value="{{ old('trailer_license_number') }}" placeholder="Trailer license plate" class="ui-input">
+                                    <input name="trailer_owner" type="text" value="{{ old('trailer_owner') }}" placeholder="Trailer owner" class="ui-input">
                                 </div>
                             </div>
                             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
                                 <div>
                                     <label for="vehicle_license_number" class="ui-label">License plate</label>
-                                    <input id="vehicle_license_number" name="vehicle_license_number" type="text" required class="ui-input">
+                                    <input id="vehicle_license_number" name="vehicle_license_number" type="text" value="{{ old('vehicle_license_number') }}" required class="ui-input">
                                 </div>
                                 <div>
                                     <label for="vehicle_owner" class="ui-label">Owner</label>
-                                    <input id="vehicle_owner" name="vehicle_owner" type="text" required class="ui-input">
+                                    <input id="vehicle_owner" name="vehicle_owner" type="text" value="{{ old('vehicle_owner') }}" required class="ui-input">
                                 </div>
                             </div>
                         </div>
@@ -361,5 +382,7 @@
                 </aside>
             </div>
         </form>
+        <script type="application/json" id="ctn-validation-errors">@json($errors->messages())</script>
+        <script type="application/json" id="ctn-old-input">@json(old())</script>
     </section>
 </x-layouts.app>
