@@ -12,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class CtnReservationMessageController extends Controller
@@ -96,7 +97,7 @@ class CtnReservationMessageController extends Controller
         $hasRoofExtra = $hasRoofBox && $request->boolean('has_roof_extra');
         $hasBackExtra = $hasRoofBox && $request->boolean('has_back_extra');
 
-        $reservation = CtnReservationMessage::create(array_merge($data, [
+        $reservationData = array_merge($data, [
             'return_date' => $isRoundTrip ? ($data['return_date'] ?? null) : null,
             'return_passengers' => $isRoundTrip ? ($data['return_passengers'] ?? null) : null,
             'vehicle_custom_dimensions' => $hasVehicleDimensions,
@@ -120,7 +121,15 @@ class CtnReservationMessageController extends Controller
             'height_acceptance' => true,
             'submitted_ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
-        ]));
+        ]);
+
+        if (! $this->supportsVehicleExtraEquipmentColumns()) {
+            foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'has_back_extra', 'back_extra_length'] as $column) {
+                unset($reservationData[$column]);
+            }
+        }
+
+        $reservation = CtnReservationMessage::create($reservationData);
 
         $this->sendBookingNotification($reservation);
 
@@ -142,6 +151,17 @@ class CtnReservationMessageController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
         }
+    }
+
+    private function supportsVehicleExtraEquipmentColumns(): bool
+    {
+        foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'has_back_extra', 'back_extra_length'] as $column) {
+            if (! Schema::hasColumn('ctn_reservation_messages', $column)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function dateFilterForQuery(?string $date): ?string
