@@ -375,9 +375,13 @@
                         </label>
                     </section>
 
-                    <button type="submit" class="ui-button-primary w-full py-3">
-                        <x-icon name="ship" />
-                        <span>Send ferry request</span>
+                    <button type="submit" class="ui-button-primary reservation-submit-loader w-full py-3" data-reservation-submit aria-busy="false">
+                        <span class="reservation-submit-spinner" aria-hidden="true"></span>
+                        <span data-submit-default class="inline-flex items-center gap-2">
+                            <x-icon name="ship" />
+                            <span>Send ferry request</span>
+                        </span>
+                        <span data-submit-loading class="hidden">Sending request...</span>
                     </button>
                 </aside>
             </div>

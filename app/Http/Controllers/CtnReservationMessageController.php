@@ -92,6 +92,9 @@ class CtnReservationMessageController extends Controller
         $isRoundTrip = $data['journey_type'] === 'round_trip';
         $hasTrailer = $request->boolean('has_trailer');
         $hasVehicleDimensions = $request->boolean('vehicle_custom_dimensions');
+        $hasRoofBox = $request->boolean('has_roof_box');
+        $hasRoofExtra = $hasRoofBox && $request->boolean('has_roof_extra');
+        $hasBackExtra = $hasRoofBox && $request->boolean('has_back_extra');
 
         $reservation = CtnReservationMessage::create(array_merge($data, [
             'return_date' => $isRoundTrip ? ($data['return_date'] ?? null) : null,
@@ -100,6 +103,11 @@ class CtnReservationMessageController extends Controller
             'vehicle_length' => $hasVehicleDimensions ? ($data['vehicle_length'] ?? null) : null,
             'vehicle_width' => $hasVehicleDimensions ? ($data['vehicle_width'] ?? null) : null,
             'vehicle_height' => $hasVehicleDimensions ? ($data['vehicle_height'] ?? null) : null,
+            'has_roof_box' => $hasRoofBox,
+            'has_roof_extra' => $hasRoofExtra,
+            'roof_extra_height' => $hasRoofExtra ? ($data['roof_extra_height'] ?? null) : null,
+            'has_back_extra' => $hasBackExtra,
+            'back_extra_length' => $hasBackExtra ? ($data['back_extra_length'] ?? null) : null,
             'has_trailer' => $hasTrailer,
             'trailer_outward' => $hasTrailer && $request->boolean('trailer_outward'),
             'trailer_return' => $hasTrailer && $isRoundTrip && $request->boolean('trailer_return'),
