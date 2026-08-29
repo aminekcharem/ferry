@@ -97,4 +97,23 @@ class CtnReservationMessage extends Model
     {
         return self::STATUSES[$this->status] ?? self::STATUSES[self::STATUS_PENDING];
     }
+
+    public function displayReturnCountry(): ?string
+    {
+        if ($this->journey_type !== 'round_trip') {
+            return null;
+        }
+
+        if (filled($this->return_country)) {
+            return $this->return_country;
+        }
+
+        $parts = array_map('trim', explode(' - ', (string) $this->departure_country, 2));
+
+        if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
+            return null;
+        }
+
+        return "{$parts[1]} - {$parts[0]}";
+    }
 }

@@ -56,7 +56,7 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                 <tr><td style="{{ $labelStyle }}">Trip type</td><td style="{{ $valueStyle }}">{{ $tripType }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Departure country</td><td style="{{ $valueStyle }}">{{ $reservation->departure_country }}</td></tr>
-                <tr><td style="{{ $labelStyle }}">Return country</td><td style="{{ $valueStyle }}">{{ $reservation->return_country ?: '-' }}</td></tr>
+                <tr><td style="{{ $labelStyle }}">Return country</td><td style="{{ $valueStyle }}">{{ $reservation->displayReturnCountry() ?: '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Outward date</td><td style="{{ $valueStyle }}">{{ $formatDate($reservation->outward_date) }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Return date</td><td style="{{ $valueStyle }}">{{ $formatDate($reservation->return_date) }}</td></tr>
             </table>
@@ -137,8 +137,8 @@
                 <tr><td style="{{ $labelStyle }}">Model year</td><td style="{{ $valueStyle }}">{{ $reservation->vehicle_year ?: '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Custom dimensions</td><td style="{{ $valueStyle }}">{{ $yesNo((bool) $reservation->vehicle_custom_dimensions) }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Length</td><td style="{{ $valueStyle }}">{{ $reservation->vehicle_custom_dimensions ? $reservation->vehicle_length : '-' }}</td></tr>
-                <tr><td style="{{ $labelStyle }}">Width</td><td style="{{ $valueStyle }}">{{ $reservation->vehicle_custom_dimensions ? $reservation->vehicle_width : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Height</td><td style="{{ $valueStyle }}">{{ $reservation->vehicle_custom_dimensions ? $reservation->vehicle_height : '-' }}</td></tr>
+                <tr><td style="{{ $labelStyle }}">Width</td><td style="{{ $valueStyle }}">{{ $reservation->vehicle_custom_dimensions ? $reservation->vehicle_width : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Roof box</td><td style="{{ $valueStyle }}">{{ $yesNo((bool) $reservation->has_roof_box) }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Extra roof height</td><td style="{{ $valueStyle }}">{{ $reservation->has_roof_extra ? $reservation->roof_extra_height : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Extra back length</td><td style="{{ $valueStyle }}">{{ $reservation->has_back_extra ? $reservation->back_extra_length : '-' }}</td></tr>
@@ -155,8 +155,8 @@
                 <tr><td style="{{ $labelStyle }}">Trip</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($trailerTrip ?: '-') : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Type</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($reservation->trailer_type ?: '-') : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Length</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($reservation->trailer_length ?: '-') : '-' }}</td></tr>
-                <tr><td style="{{ $labelStyle }}">Width</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($reservation->trailer_width ?: '-') : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Height</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($reservation->trailer_height ?: '-') : '-' }}</td></tr>
+                <tr><td style="{{ $labelStyle }}">Width</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($reservation->trailer_width ?: '-') : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">License plate</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($reservation->trailer_license_number ?: '-') : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Owner</td><td style="{{ $valueStyle }}">{{ $reservation->has_trailer ? ($reservation->trailer_owner ?: '-') : '-' }}</td></tr>
             </table>

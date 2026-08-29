@@ -228,6 +228,47 @@ class CtnReservationMessageTest extends TestCase
         $this->assertStringContainsString('Height confirmation', $html);
     }
 
+    public function test_reservation_email_infers_missing_return_country_for_round_trip(): void
+    {
+        $reservation = CtnReservationMessage::create($this->modelPayload([
+            'journey_type' => 'round_trip',
+            'departure_country' => 'Tunisia - Marseille',
+            'return_country' => null,
+            'return_date' => '2026-08-30',
+            'return_passengers' => [1, 0, 0, 0, 0, 0],
+        ]));
+
+        $html = (new FerryReservationReceived($reservation))->render();
+
+        $this->assertStringContainsString('Return country', $html);
+        $this->assertStringContainsString('Marseille - Tunisia', $html);
+    }
+
+    public function test_reservation_email_lists_width_after_length_and_height(): void
+    {
+        $reservation = CtnReservationMessage::create($this->modelPayload([
+            'vehicle_custom_dimensions' => true,
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_trailer' => true,
+            'trailer_outward' => true,
+            'trailer_type' => 'Caravan',
+            'trailer_length' => '3.50',
+            'trailer_width' => '1.80',
+            'trailer_height' => '1.70',
+        ]));
+
+        $html = (new FerryReservationReceived($reservation))->render();
+        $vehicleSection = substr($html, strpos($html, 'Custom dimensions'), strpos($html, 'Roof box') - strpos($html, 'Custom dimensions'));
+        $trailerSection = substr($html, strpos($html, 'Trailer reservation'), strpos($html, 'License plate', strpos($html, 'Trailer reservation')) - strpos($html, 'Trailer reservation'));
+
+        $this->assertLessThan(strpos($vehicleSection, 'Height'), strpos($vehicleSection, 'Length'));
+        $this->assertLessThan(strpos($vehicleSection, 'Width'), strpos($vehicleSection, 'Height'));
+        $this->assertLessThan(strpos($trailerSection, 'Height'), strpos($trailerSection, 'Length'));
+        $this->assertLessThan(strpos($trailerSection, 'Width'), strpos($trailerSection, 'Height'));
+    }
+
     public function test_empty_booking_notification_settings_disable_email_notification(): void
     {
         Mail::fake();
