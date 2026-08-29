@@ -56,6 +56,7 @@
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                 <tr><td style="{{ $labelStyle }}">Trip type</td><td style="{{ $valueStyle }}">{{ $tripType }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Departure country</td><td style="{{ $valueStyle }}">{{ $reservation->departure_country }}</td></tr>
+                <tr><td style="{{ $labelStyle }}">Return country</td><td style="{{ $valueStyle }}">{{ $reservation->return_country ?: '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Outward date</td><td style="{{ $valueStyle }}">{{ $formatDate($reservation->outward_date) }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Return date</td><td style="{{ $valueStyle }}">{{ $formatDate($reservation->return_date) }}</td></tr>
             </table>

@@ -24,6 +24,7 @@ class CtnReservationMessage extends Model
         'customer_message',
         'journey_type',
         'departure_country',
+        'return_country',
         'outward_date',
         'return_date',
         'outward_passengers',

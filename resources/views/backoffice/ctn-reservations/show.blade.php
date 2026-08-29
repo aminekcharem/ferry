@@ -106,9 +106,10 @@
 
                 <section class="ui-card backoffice-card p-5">
                     <h2 class="text-xl font-bold text-slate-950">Trip</h2>
-                    <dl class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <dl class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Type</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->journey_type === 'round_trip' ? 'Round trip' : 'One way' }}</dd></div>
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Departure</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->departure_country }}</dd></div>
+                        <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Return country</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->return_country ?: '-' }}</dd></div>
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Outward date</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->outward_date->format('d/m/Y') }}</dd></div>
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Return date</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->return_date?->format('d/m/Y') ?: '-' }}</dd></div>
                     </dl>
