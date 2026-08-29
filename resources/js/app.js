@@ -1384,6 +1384,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const returnDate = form.querySelector('[data-return-date]');
     const returnDateInput = form.querySelector('#return_date');
+    const returnCountry = form.querySelector('[data-return-country]');
+    const returnCountryInput = form.querySelector('#return_country');
     const returnPassengers = form.querySelectorAll('[data-return-passenger]');
     const returnPassengerLabel = form.querySelector('[data-return-column-label]');
     const trailerReturn = form.querySelector('[data-trailer-return]');
@@ -1838,11 +1840,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const syncJourneyType = () => {
         const isRoundTrip = isRoundTripSelected();
-        [returnDate, returnPassengerLabel, trailerReturn].forEach((element) => {
+        [returnCountry, returnDate, returnPassengerLabel, trailerReturn].forEach((element) => {
             if (element) {
                 element.hidden = !isRoundTrip;
             }
         });
+        if (returnCountryInput) {
+            returnCountryInput.required = isRoundTrip;
+            returnCountryInput.disabled = !isRoundTrip;
+            returnCountryInput.setCustomValidity('');
+        }
         returnPassengers.forEach((element) => {
             element.hidden = !isRoundTrip;
             element.querySelectorAll('input, button').forEach((field) => {

@@ -24,6 +24,7 @@ class StoreCtnReservationMessageRequest extends FormRequest
             'customer_message' => ['nullable', 'string', 'max:5000'],
             'journey_type' => ['required', 'in:one_way,round_trip'],
             'departure_country' => ['required', 'in:Tunisia - Gênes,Tunisia - Civitavecchia,Tunisia - Palerme (Sicile),Tunisia - Marseille,Gênes - Tunisia,Civitavecchia - Tunisia,Palerme - Tunisia,Marseille - Tunisia'],
+            'return_country' => ['nullable', 'required_if:journey_type,round_trip', 'in:Tunisia - Gênes,Tunisia - Civitavecchia,Tunisia - Palerme (Sicile),Tunisia - Marseille,Gênes - Tunisia,Civitavecchia - Tunisia,Palerme - Tunisia,Marseille - Tunisia'],
             'outward_date' => ['required', 'string'],
             'return_date' => ['nullable', 'required_if:journey_type,round_trip', 'string'],
             'outward_passengers' => ['required', 'array', 'size:6'],

@@ -98,6 +98,7 @@ class CtnReservationMessageController extends Controller
         $hasBackExtra = $hasRoofBox && $request->boolean('has_back_extra');
 
         $reservationData = array_merge($data, [
+            'return_country' => $isRoundTrip ? ($data['return_country'] ?? null) : null,
             'return_date' => $isRoundTrip ? ($data['return_date'] ?? null) : null,
             'return_passengers' => $isRoundTrip ? ($data['return_passengers'] ?? null) : null,
             'vehicle_custom_dimensions' => $hasVehicleDimensions,
@@ -129,12 +130,20 @@ class CtnReservationMessageController extends Controller
             }
         }
 
+        if (! $this->supportsReturnCountryColumn()) {
+            unset($reservationData['return_country']);
+        }
+
         $reservation = CtnReservationMessage::create($reservationData);
 
         $this->sendBookingNotification($reservation);
 
+        $redirectParameters = $request->boolean('embed')
+            ? ['embed' => 1, 'reservation_sent' => 1]
+            : [];
+
         return redirect()
-            ->route('reservation.ctn', $request->boolean('embed') ? ['embed' => 1] : [])
+            ->route('reservation.ctn', $redirectParameters)
             ->with('status', 'Your ferry reservation request has been sent.');
     }
 
@@ -162,6 +171,11 @@ class CtnReservationMessageController extends Controller
         }
 
         return true;
+    }
+
+    private function supportsReturnCountryColumn(): bool
+    {
+        return Schema::hasColumn('ctn_reservation_messages', 'return_country');
     }
 
     private function dateFilterForQuery(?string $date): ?string

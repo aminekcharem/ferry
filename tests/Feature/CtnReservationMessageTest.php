@@ -27,6 +27,7 @@ class CtnReservationMessageTest extends TestCase
         $this->assertDatabaseHas('ctn_reservation_messages', [
             'customer_email' => 'client@example.com',
             'journey_type' => 'one_way',
+            'return_country' => null,
             'return_date' => null,
         ]);
         $this->assertSame('2026-08-20', CtnReservationMessage::first()->outward_date->format('Y-m-d'));
@@ -48,7 +49,15 @@ class CtnReservationMessageTest extends TestCase
         Mail::fake();
 
         $this->post(route('reservation.ctn.store', ['embed' => 1]), $this->validPayload())
-            ->assertRedirect(route('reservation.ctn', ['embed' => 1], absolute: false));
+            ->assertRedirect(route('reservation.ctn', ['embed' => 1, 'reservation_sent' => 1], absolute: false));
+    }
+
+    public function test_embedded_reservation_success_query_shows_confirmation_modal(): void
+    {
+        $this->get(route('reservation.ctn', ['embed' => 1, 'reservation_sent' => 1]))
+            ->assertOk()
+            ->assertSee('data-reservation-success-modal', false)
+            ->assertSee('Your ferry reservation request has been sent.');
     }
 
     public function test_booking_notification_is_sent_to_configured_backoffice_recipients(): void
@@ -125,10 +134,33 @@ class CtnReservationMessageTest extends TestCase
         ]);
     }
 
+    public function test_round_trip_stores_return_country(): void
+    {
+        Mail::fake();
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload([
+            'journey_type' => 'round_trip',
+            'return_country' => 'Gênes - Tunisia',
+            'return_date' => '2026-08-30',
+            'return_passengers' => [1, 0, 0, 0, 0, 0],
+        ]))->assertRedirect(route('reservation.ctn', absolute: false));
+
+        $this->assertDatabaseHas('ctn_reservation_messages', [
+            'customer_email' => 'client@example.com',
+            'journey_type' => 'round_trip',
+            'return_country' => 'Gênes - Tunisia',
+        ]);
+
+        $reservation = CtnReservationMessage::where('customer_email', 'client@example.com')->firstOrFail();
+
+        $this->assertSame('2026-08-30', $reservation->return_date->format('Y-m-d'));
+    }
+
     public function test_reservation_email_contains_all_submitted_form_sections(): void
     {
         $reservation = CtnReservationMessage::create($this->modelPayload([
             'journey_type' => 'round_trip',
+            'return_country' => 'Gênes - Tunisia',
             'return_date' => '2026-08-30',
             'outward_passengers' => [1, 1, 0, 0, 0, 0],
             'return_passengers' => [1, 0, 1, 0, 0, 0],
@@ -180,6 +212,7 @@ class CtnReservationMessageTest extends TestCase
 
         $this->assertStringContainsString('Client CTN', $html);
         $this->assertStringContainsString('Round trip', $html);
+        $this->assertStringContainsString('Gênes - Tunisia', $html);
         $this->assertStringContainsString('Passenger quantities', $html);
         $this->assertStringContainsString('P123456', $html);
         $this->assertStringContainsString('Different return passenger', $html);

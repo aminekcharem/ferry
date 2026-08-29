@@ -1,6 +1,9 @@
 <x-layouts.app title="Ferry Reservation">
     <section class="ui-shell py-8 lg:py-10">
         @php
+            $reservationSuccessMessage = session('status')
+                ?: (request()->boolean('reservation_sent') ? 'Your ferry reservation request has been sent.' : null);
+
             $htmlDate = function (?string $value): string {
                 if (blank($value)) {
                     return '';
@@ -20,6 +23,17 @@
 
                 return '';
             };
+
+            $ctnRoutes = [
+                'Tunisia - Gênes',
+                'Tunisia - Civitavecchia',
+                'Tunisia - Palerme (Sicile)',
+                'Tunisia - Marseille',
+                'Gênes - Tunisia',
+                'Civitavecchia - Tunisia',
+                'Palerme - Tunisia',
+                'Marseille - Tunisia',
+            ];
         @endphp
 
         <div class="mb-6 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
@@ -36,7 +50,7 @@
             @endunless
         </div>
 
-        @if (session('status'))
+        @if ($reservationSuccessMessage)
             <dialog class="ui-modal reservation-success-modal w-[min(92vw,28rem)] rounded-lg border border-emerald-100 bg-white p-0 text-left shadow-xl" data-reservation-success-modal aria-labelledby="reservation-success-title">
                 <div class="relative overflow-hidden p-6 text-center sm:p-7">
                     <button type="button" class="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-800" data-reservation-success-close aria-label="Close confirmation">
@@ -49,7 +63,7 @@
 
                     <h2 id="reservation-success-title" class="mt-5 text-xl font-bold text-slate-950">Request sent</h2>
                     <p class="mt-3 text-sm font-semibold leading-6 text-emerald-700">
-                        {{ session('status') }}
+                        {{ $reservationSuccessMessage }}
                     </p>
                     <p class="mt-2 text-sm leading-6 text-slate-600">
                         Our team will review the reservation details and contact you shortly.
@@ -138,20 +152,22 @@
                                 <label for="departure_country" class="ui-label">Departure country</label>
                                 <select id="departure_country" name="departure_country" required class="ui-input">
                                     <option value="">Select</option>
-                                    @foreach ([
-                                        'Tunisia - Gênes',
-                                        'Tunisia - Civitavecchia',
-                                        'Tunisia - Palerme (Sicile)',
-                                        'Tunisia - Marseille',
-                                        'Gênes - Tunisia',
-                                        'Civitavecchia - Tunisia',
-                                        'Palerme - Tunisia',
-                                        'Marseille - Tunisia',
-                                    ] as $route)
+                                    @foreach ($ctnRoutes as $route)
                                         <option value="{{ $route }}" @selected(old('departure_country') === $route)>{{ $route }}</option>
                                     @endforeach
                                 </select>
                                 @error('departure_country')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div data-return-country>
+                                <label for="return_country" class="ui-label">Return country</label>
+                                <select id="return_country" name="return_country" class="ui-input">
+                                    <option value="">Select</option>
+                                    @foreach ($ctnRoutes as $route)
+                                        <option value="{{ $route }}" @selected(old('return_country') === $route)>{{ $route }}</option>
+                                    @endforeach
+                                </select>
+                                @error('return_country')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                             </div>
 
                             <div class="grid gap-4 sm:grid-cols-2">
@@ -178,15 +194,16 @@
                                         <h2 class="text-xl font-bold text-slate-950">Passengers</h2>
                                         <p class="mt-1 text-sm text-slate-600">Adjust quantities by category.</p>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-4 text-xs font-bold uppercase text-slate-500">
-                                        <span>Outward</span>
-                                        <span data-return-column-label>Return</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-5 divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200">
+                            <div class="hidden bg-white px-3 pt-3 sm:grid sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-3">
+                                <span aria-hidden="true"></span>
+                                <span class="w-36 text-center text-xs font-bold uppercase text-slate-500">Outward</span>
+                                <span data-return-column-label class="w-36 text-center text-xs font-bold uppercase text-slate-500">Return</span>
+                            </div>
                             @foreach ([
                                 'Senior (60 to 102 years)',
                                 'Adult(s) (25 to 60 years)',
@@ -197,15 +214,21 @@
                             ] as $passenger)
                                 <div class="grid gap-3 bg-white p-3 sm:grid-cols-[1fr_auto_auto] sm:items-center" data-passenger-row data-passenger-category="{{ $passenger }}">
                                     <span class="text-sm font-semibold text-slate-800">{{ $passenger }}</span>
-                                    <div class="flex items-center gap-2">
-                                        <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove passenger">-</button>
-                                        <input type="number" name="outward_passengers[]" min="0" value="{{ old('outward_passengers.' . $loop->index, 0) }}" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
-                                        <button type="button" data-counter-plus class="h-9 w-9 rounded-md bg-primary text-lg font-bold text-white hover:bg-primary-700" aria-label="Add passenger">+</button>
+                                    <div class="grid grid-cols-[minmax(4.5rem,1fr)_auto] items-center gap-3 sm:block">
+                                        <span class="text-xs font-bold uppercase text-slate-500 sm:sr-only">Outward</span>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove passenger">-</button>
+                                            <input type="number" name="outward_passengers[]" min="0" value="{{ old('outward_passengers.' . $loop->index, 0) }}" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
+                                            <button type="button" data-counter-plus class="h-9 w-9 rounded-md bg-primary text-lg font-bold text-white hover:bg-primary-700" aria-label="Add passenger">+</button>
+                                        </div>
                                     </div>
-                                    <div data-return-passenger class="flex items-center gap-2">
-                                        <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove return passenger">-</button>
-                                        <input type="number" name="return_passengers[]" min="0" value="{{ old('return_passengers.' . $loop->index, 0) }}" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
-                                        <button type="button" data-counter-plus class="h-9 w-9 rounded-md bg-primary text-lg font-bold text-white hover:bg-primary-700" aria-label="Add return passenger">+</button>
+                                    <div data-return-passenger class="grid grid-cols-[minmax(4.5rem,1fr)_auto] items-center gap-3 sm:block">
+                                        <span class="text-xs font-bold uppercase text-slate-500 sm:sr-only">Return</span>
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove return passenger">-</button>
+                                            <input type="number" name="return_passengers[]" min="0" value="{{ old('return_passengers.' . $loop->index, 0) }}" class="h-9 w-14 rounded-md border border-slate-300 text-center text-sm font-bold text-slate-950">
+                                            <button type="button" data-counter-plus class="h-9 w-9 rounded-md bg-primary text-lg font-bold text-white hover:bg-primary-700" aria-label="Add return passenger">+</button>
+                                        </div>
                                     </div>
                                 </div>
                             @endforeach
