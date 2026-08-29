@@ -109,7 +109,7 @@
                     <dl class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Type</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->journey_type === 'round_trip' ? 'Round trip' : 'One way' }}</dd></div>
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Departure</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->departure_country }}</dd></div>
-                        <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Return country</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->return_country ?: '-' }}</dd></div>
+                        <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Return country</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->displayReturnCountry() ?: '-' }}</dd></div>
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Outward date</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->outward_date->format('d/m/Y') }}</dd></div>
                         <div class="{{ $infoClass }}"><dt class="text-xs font-bold uppercase text-slate-500">Return date</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->return_date?->format('d/m/Y') ?: '-' }}</dd></div>
                     </dl>
@@ -216,7 +216,7 @@
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Brand / Model</dt><dd class="mt-1 font-semibold text-slate-950">{{ $brand }} {{ $model }}{{ $message->vehicle_year ? ' (' . $message->vehicle_year . ')' : '' }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">License plate</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_license_number }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Owner</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_owner }}</dd></div>
-                        <div><dt class="text-xs font-bold uppercase text-slate-500">Dimensions</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_custom_dimensions ? "{$message->vehicle_length} x {$message->vehicle_width} x {$message->vehicle_height}" : 'Standard dimensions' }}</dd></div>
+                        <div><dt class="text-xs font-bold uppercase text-slate-500">Dimensions</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_custom_dimensions ? "{$message->vehicle_length} x {$message->vehicle_height} x {$message->vehicle_width}" : 'Standard dimensions' }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Roof box</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_roof_box ? 'Yes' : 'No' }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Extra height</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_roof_extra ? $message->roof_extra_height : '-' }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Extra length</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_back_extra ? $message->back_extra_length : '-' }}</dd></div>
@@ -229,7 +229,7 @@
                         <dl class="mt-5 space-y-4">
                             <div><dt class="text-xs font-bold uppercase text-slate-500">Type</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->trailer_type }}</dd></div>
                             <div><dt class="text-xs font-bold uppercase text-slate-500">Trip</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->trailer_outward ? 'Outward' : '' }} {{ $message->trailer_return ? 'Return' : '' }}</dd></div>
-                            <div><dt class="text-xs font-bold uppercase text-slate-500">Dimensions</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->trailer_length }} x {{ $message->trailer_width }} x {{ $message->trailer_height }}</dd></div>
+                            <div><dt class="text-xs font-bold uppercase text-slate-500">Dimensions</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->trailer_length }} x {{ $message->trailer_height }} x {{ $message->trailer_width }}</dd></div>
                             <div><dt class="text-xs font-bold uppercase text-slate-500">License plate</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->trailer_license_number ?: '-' }}</dd></div>
                             <div><dt class="text-xs font-bold uppercase text-slate-500">Owner</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->trailer_owner ?: '-' }}</dd></div>
                         </dl>
