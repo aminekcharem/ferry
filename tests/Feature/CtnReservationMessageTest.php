@@ -33,6 +33,24 @@ class CtnReservationMessageTest extends TestCase
         Mail::assertNothingSent();
     }
 
+    public function test_embedded_reservation_page_hides_menu(): void
+    {
+        $this->get(route('reservation.ctn', ['embed' => 1]))
+            ->assertOk()
+            ->assertDontSee('Log in')
+            ->assertDontSee('Ferry Booking')
+            ->assertDontSee('Back to home')
+            ->assertSee('reservation-ctn?embed=1', false);
+    }
+
+    public function test_embedded_reservation_submission_preserves_embed_parameter(): void
+    {
+        Mail::fake();
+
+        $this->post(route('reservation.ctn.store', ['embed' => 1]), $this->validPayload())
+            ->assertRedirect(route('reservation.ctn', ['embed' => 1], absolute: false));
+    }
+
     public function test_booking_notification_is_sent_to_configured_backoffice_recipients(): void
     {
         Mail::fake();

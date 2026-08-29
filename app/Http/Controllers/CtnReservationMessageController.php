@@ -134,7 +134,7 @@ class CtnReservationMessageController extends Controller
         $this->sendBookingNotification($reservation);
 
         return redirect()
-            ->route('reservation.ctn')
+            ->route('reservation.ctn', $request->boolean('embed') ? ['embed' => 1] : [])
             ->with('status', 'Your ferry reservation request has been sent.');
     }
 
