@@ -28,10 +28,12 @@
                 <h1 class="mt-3 text-3xl font-bold text-slate-950">Ferry reservation with vehicle</h1>
                 <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Enter the itinerary, passengers, and vehicle information. Passenger details appear automatically based on the selected quantities.</p>
             </div>
-            <a href="{{ url('/') }}" class="ui-button-secondary">
-                <x-icon name="chevron-left" />
-                <span>Back to home</span>
-            </a>
+            @unless (request()->boolean('embed'))
+                <a href="{{ url('/') }}" class="ui-button-secondary">
+                    <x-icon name="chevron-left" />
+                    <span>Back to home</span>
+                </a>
+            @endunless
         </div>
 
         @if (session('status'))
@@ -72,7 +74,7 @@
             </div>
         @endif
 
-        <form id="ctn-reservation-form" action="{{ route('reservation.ctn.store') }}" method="POST" class="space-y-6">
+        <form id="ctn-reservation-form" action="{{ route('reservation.ctn.store', request()->boolean('embed') ? ['embed' => 1] : []) }}" method="POST" class="space-y-6">
             @csrf
 
             <div class="grid gap-6 lg:grid-cols-[1fr_380px]">
