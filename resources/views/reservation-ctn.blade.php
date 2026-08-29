@@ -293,15 +293,15 @@
                                 <div data-vehicle-dimensions class="mt-4 grid gap-3" hidden>
                                     <div>
                                         <label for="vehicle_length" class="ui-label">Length</label>
-                                        <input id="vehicle_length" name="vehicle_length" type="number" step="0.05" min="0" value="{{ old('vehicle_length', '4.50') }}" disabled class="ui-input">
+                                        <input id="vehicle_length" name="vehicle_length" type="number" step="0.01" min="0" value="{{ old('vehicle_length', '4.50') }}" disabled class="ui-input">
                                     </div>
                                     <div>
                                         <label for="vehicle_height" class="ui-label">Height</label>
-                                        <input id="vehicle_height" name="vehicle_height" type="number" step="0.05" min="0" value="{{ old('vehicle_height', '1.70') }}" disabled class="ui-input">
+                                        <input id="vehicle_height" name="vehicle_height" type="number" step="0.01" min="0" value="{{ old('vehicle_height', '1.70') }}" disabled class="ui-input">
                                     </div>
                                     <div>
                                         <label for="vehicle_width" class="ui-label">Width</label>
-                                        <input id="vehicle_width" name="vehicle_width" type="number" step="0.05" min="0" value="{{ old('vehicle_width', '1.80') }}" disabled class="ui-input">
+                                        <input id="vehicle_width" name="vehicle_width" type="number" step="0.01" min="0" value="{{ old('vehicle_width', '1.80') }}" disabled class="ui-input">
                                     </div>
                                 </div>
                             </div>
