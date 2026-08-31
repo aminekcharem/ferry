@@ -136,7 +136,7 @@ class CtnReservationMessageController extends Controller
 
         $reservation = CtnReservationMessage::create($reservationData);
 
-        $this->sendBookingNotification($reservation);
+        $this->sendBookingNotifications($reservation);
 
         $redirectParameters = $request->boolean('embed')
             ? ['embed' => 1, 'reservation_sent' => 1]
@@ -147,7 +147,13 @@ class CtnReservationMessageController extends Controller
             ->with('status', 'Your ferry reservation request has been sent.');
     }
 
-    private function sendBookingNotification(CtnReservationMessage $reservation): void
+    private function sendBookingNotifications(CtnReservationMessage $reservation): void
+    {
+        $this->sendAdminBookingNotification($reservation);
+        $this->sendCustomerBookingNotification($reservation);
+    }
+
+    private function sendAdminBookingNotification(CtnReservationMessage $reservation): void
     {
         $recipients = $this->settings->bookingNotificationEmails();
 
@@ -157,6 +163,15 @@ class CtnReservationMessageController extends Controller
 
         try {
             Mail::to($recipients)->send(new FerryReservationReceived($reservation));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    private function sendCustomerBookingNotification(CtnReservationMessage $reservation): void
+    {
+        try {
+            Mail::to($reservation->customer_email)->send(new FerryReservationReceived($reservation, customerCopy: true));
         } catch (\Throwable $exception) {
             report($exception);
         }

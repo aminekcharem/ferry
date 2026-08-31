@@ -13,13 +13,18 @@ class FerryReservationReceived extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public readonly CtnReservationMessage $reservation) {}
+    public function __construct(
+        public readonly CtnReservationMessage $reservation,
+        public readonly bool $customerCopy = false
+    ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New ferry reservation request #'.$this->reservation->id,
-            replyTo: [$this->reservation->customer_email],
+            subject: $this->customerCopy
+                ? 'Your ferry reservation request #'.$this->reservation->id.' - Yesmin Tours'
+                : 'New ferry reservation request #'.$this->reservation->id,
+            replyTo: $this->customerCopy ? [] : [$this->reservation->customer_email],
         );
     }
 

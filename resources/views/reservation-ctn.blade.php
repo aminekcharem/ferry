@@ -31,7 +31,7 @@
                 'Tunisia - Marseille',
                 'Gênes - Tunisia',
                 'Civitavecchia - Tunisia',
-                'Palerme - Tunisia',
+                'Palerme (Sicile) - Tunisia',
                 'Marseille - Tunisia',
             ];
         @endphp
@@ -160,7 +160,14 @@
                             </div>
 
                             <div data-return-country>
-                                <label for="return_country" class="ui-label">Return country</label>
+                                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <label for="return_country" class="ui-label">Return country</label>
+                                    <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                        <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary-100" data-same-return-destination>
+                                        <span>Same return destination</span>
+                                    </label>
+                                </div>
+                                <input type="hidden" name="return_country" value="" disabled data-return-country-hidden>
                                 <select id="return_country" name="return_country" class="ui-input">
                                     <option value="">Select</option>
                                     @foreach ($ctnRoutes as $route)
@@ -214,7 +221,7 @@
                             ] as $passenger)
                                 <div class="grid gap-3 bg-white p-3 sm:grid-cols-[1fr_auto_auto] sm:items-center" data-passenger-row data-passenger-category="{{ $passenger }}">
                                     <span class="text-sm font-semibold text-slate-800">{{ $passenger }}</span>
-                                    <div class="grid grid-cols-[minmax(4.5rem,1fr)_auto] items-center gap-3 sm:block">
+                                    <div class="grid grid-cols-[minmax(4.5rem,1fr)_auto] items-center gap-3 sm:block" data-passenger-direction="outward">
                                         <span class="text-xs font-bold uppercase text-slate-500 sm:sr-only">Outward</span>
                                         <div class="flex items-center gap-2">
                                             <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove passenger">-</button>
@@ -222,7 +229,7 @@
                                             <button type="button" data-counter-plus class="h-9 w-9 rounded-md bg-primary text-lg font-bold text-white hover:bg-primary-700" aria-label="Add passenger">+</button>
                                         </div>
                                     </div>
-                                    <div data-return-passenger class="grid grid-cols-[minmax(4.5rem,1fr)_auto] items-center gap-3 sm:block">
+                                    <div data-return-passenger data-passenger-direction="return" class="grid grid-cols-[minmax(4.5rem,1fr)_auto] items-center gap-3 sm:block">
                                         <span class="text-xs font-bold uppercase text-slate-500 sm:sr-only">Return</span>
                                         <div class="flex items-center gap-2">
                                             <button type="button" data-counter-minus class="h-9 w-9 rounded-md border border-slate-300 text-lg font-bold text-slate-600 hover:bg-slate-100" aria-label="Remove return passenger">-</button>
@@ -320,7 +327,7 @@
                                             <div data-extra-dimension-select-wrapper="height" class="mt-3" hidden>
                                                 <label for="roof_extra_height" class="ui-label">Extra height</label>
                                                 <select id="roof_extra_height" name="roof_extra_height" data-extra-dimension-select data-extra-dimension-target="height" data-selected-value="{{ old('roof_extra_height') }}" disabled class="ui-input">
-                                                    @foreach ([['0.25', 'up to 0.25'], ['0.50', 'up to 0.5'], ['0.75', 'up to 0.75'], ['1.00', 'up to 1.00'], ['1.25', 'up to 1.25'], ['1.50', 'up to 1.50']] as [$value, $label])
+                                                    @foreach ([['0.50', 'up to 0.5'], ['1.00', 'up to 1.00']] as [$value, $label])
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
                                                 </select>
@@ -334,7 +341,7 @@
                                             <div data-extra-dimension-select-wrapper="length" class="mt-3" hidden>
                                                 <label for="back_extra_length" class="ui-label">Extra length</label>
                                                 <select id="back_extra_length" name="back_extra_length" data-extra-dimension-select data-extra-dimension-target="length" data-selected-value="{{ old('back_extra_length') }}" disabled class="ui-input">
-                                                    @foreach ([['0.25', 'up to 0.25'], ['0.50', 'up to 0.5'], ['0.75', 'up to 0.75'], ['1.00', 'up to 1.00'], ['1.25', 'up to 1.25'], ['1.50', 'up to 1.50']] as [$value, $label])
+                                                    @foreach ([['0.50', 'up to 0.5'], ['1.00', 'up to 1.00']] as [$value, $label])
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
                                                 </select>

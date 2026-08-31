@@ -1384,8 +1384,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const returnDate = form.querySelector('[data-return-date]');
     const returnDateInput = form.querySelector('#return_date');
+    const departureCountryInput = form.querySelector('#departure_country');
     const returnCountry = form.querySelector('[data-return-country]');
     const returnCountryInput = form.querySelector('#return_country');
+    const returnCountryHiddenInput = form.querySelector('[data-return-country-hidden]');
+    const sameReturnDestinationInput = form.querySelector('[data-same-return-destination]');
     const returnPassengers = form.querySelectorAll('[data-return-passenger]');
     const returnPassengerLabel = form.querySelector('[data-return-column-label]');
     const trailerReturn = form.querySelector('[data-trailer-return]');
@@ -1762,7 +1765,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isRoundTripSelected = () => form.querySelector('[name="journey_type"]:checked')?.value === 'round_trip';
 
+    const normalizeRoutePart = (value) => value.replace(/\s*\([^)]*\)/g, '').trim();
+
+    const returnCountryCorrespondenceFor = (departureCountry) => {
+        const [departureOrigin, departureDestination] = (departureCountry || '').split(' - ').map(normalizeRoutePart);
+
+        if (!departureOrigin || !departureDestination || !returnCountryInput) {
+            return '';
+        }
+
+        const matchingOption = [...returnCountryInput.options].find((option) => {
+            const [returnOrigin, returnDestination] = option.value.split(' - ').map(normalizeRoutePart);
+
+            return returnOrigin === departureDestination && returnDestination === departureOrigin;
+        });
+
+        return matchingOption?.value || '';
+    };
+
+    const initializeSameReturnDestination = () => {
+        if (!sameReturnDestinationInput || sameReturnDestinationInput.dataset.initialized) {
+            return;
+        }
+
+        const correspondingReturnCountry = returnCountryCorrespondenceFor(departureCountryInput?.value);
+
+        sameReturnDestinationInput.checked = !returnCountryInput?.value || returnCountryInput.value === correspondingReturnCountry;
+        sameReturnDestinationInput.dataset.initialized = 'true';
+    };
+
+    const syncReturnCountry = () => {
+        if (!returnCountryInput) {
+            return;
+        }
+
+        const isRoundTrip = isRoundTripSelected();
+        const useSameReturnDestination = Boolean(sameReturnDestinationInput?.checked && isRoundTrip);
+
+        if (sameReturnDestinationInput) {
+            sameReturnDestinationInput.disabled = !isRoundTrip;
+        }
+
+        if (useSameReturnDestination) {
+            const correspondingReturnCountry = returnCountryCorrespondenceFor(departureCountryInput?.value);
+
+            returnCountryInput.value = correspondingReturnCountry;
+            returnCountryInput.required = false;
+            returnCountryInput.disabled = true;
+
+            if (returnCountryHiddenInput) {
+                returnCountryHiddenInput.value = correspondingReturnCountry;
+                returnCountryHiddenInput.disabled = false;
+            }
+        } else {
+            returnCountryInput.required = isRoundTrip;
+            returnCountryInput.disabled = !isRoundTrip;
+
+            if (returnCountryHiddenInput) {
+                returnCountryHiddenInput.disabled = true;
+                returnCountryHiddenInput.value = '';
+            }
+        }
+
+        returnCountryInput.setCustomValidity('');
+    };
+
+    const syncReturnPassengerInput = (row) => {
+        const outwardInput = row.querySelector('[name="outward_passengers[]"]');
+        const returnInput = row.querySelector('[name="return_passengers[]"]');
+
+        if (!outwardInput || !returnInput || returnInput.dataset.manuallyChanged === 'true') {
+            return;
+        }
+
+        returnInput.value = outwardInput.value;
+    };
+
+    const syncReturnPassengerInputs = () => {
+        form.querySelectorAll('[data-passenger-row]').forEach(syncReturnPassengerInput);
+    };
+
+    const initializeManualReturnPassengerInputs = () => {
+        if (!Array.isArray(oldInput.return_passengers) || oldInput.journey_type !== 'round_trip') {
+            return;
+        }
+
+        form.querySelectorAll('[data-passenger-row]').forEach((row, index) => {
+            const outwardInput = row.querySelector('[name="outward_passengers[]"]');
+            const returnInput = row.querySelector('[name="return_passengers[]"]');
+            const previousReturnValue = oldInput.return_passengers[index];
+
+            if (returnInput && previousReturnValue !== undefined && String(previousReturnValue) !== String(outwardInput?.value ?? '')) {
+                returnInput.dataset.manuallyChanged = 'true';
+            }
+        });
+    };
+
     const renderPassengerDetails = () => {
+        syncReturnPassengerInputs();
+
         const existingValues = getPassengerDetailValues();
         const isRoundTrip = isRoundTripSelected();
         const fragment = document.createDocumentFragment();
@@ -1846,9 +1947,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         if (returnCountryInput) {
-            returnCountryInput.required = isRoundTrip;
-            returnCountryInput.disabled = !isRoundTrip;
-            returnCountryInput.setCustomValidity('');
+            syncReturnCountry();
         }
         returnPassengers.forEach((element) => {
             element.hidden = !isRoundTrip;
@@ -1867,19 +1966,41 @@ document.addEventListener('DOMContentLoaded', () => {
     form.querySelectorAll('[name="journey_type"]').forEach((radio) => {
         radio.addEventListener('change', syncJourneyType);
     });
+    departureCountryInput?.addEventListener('change', syncReturnCountry);
+    sameReturnDestinationInput?.addEventListener('change', syncReturnCountry);
+    initializeSameReturnDestination();
+    initializeManualReturnPassengerInputs();
     syncJourneyType();
 
     form.querySelectorAll('[data-counter-minus], [data-counter-plus]').forEach((button) => {
         button.addEventListener('click', () => {
             const input = button.parentElement.querySelector('input[type="number"]');
+            const row = button.closest('[data-passenger-row]');
+            const isReturnCounter = button.closest('[data-passenger-direction]')?.dataset.passengerDirection === 'return';
             const step = button.matches('[data-counter-plus]') ? 1 : -1;
+
+            if (isReturnCounter) {
+                input.dataset.manuallyChanged = 'true';
+            }
+
             input.value = Math.max(Number(input.min || 0), Number(input.value || 0) + step);
+            if (!isReturnCounter && row) {
+                syncReturnPassengerInput(row);
+            }
             renderPassengerDetails();
         });
     });
 
     form.querySelectorAll('[name="outward_passengers[]"], [name="return_passengers[]"]').forEach((input) => {
         input.addEventListener('input', () => {
+            const row = input.closest('[data-passenger-row]');
+
+            if (input.name === 'return_passengers[]') {
+                input.dataset.manuallyChanged = 'true';
+            } else if (row) {
+                syncReturnPassengerInput(row);
+            }
+
             renderPassengerDetails();
         });
     });
