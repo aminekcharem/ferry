@@ -63,6 +63,55 @@ class CtnReservationMessageTest extends TestCase
             ->assertSee('Your ferry reservation request has been sent.');
     }
 
+    public function test_reservation_form_shows_required_field_markers(): void
+    {
+        $this->get(route('reservation.ctn'))
+            ->assertOk()
+            ->assertSee('Full name <span class="text-red-600" aria-hidden="true">*</span>', false)
+            ->assertSee('Departure country <span class="text-red-600" aria-hidden="true">*</span>', false)
+            ->assertSee('Vehicle height confirmation')
+            ->assertSee('I confirm that the vehicle height has been entered correctly. <span class="text-red-600" aria-hidden="true">*</span>', false);
+    }
+
+    public function test_reservation_honeypot_rejects_bot_submissions(): void
+    {
+        Mail::fake();
+
+        $this->from(route('reservation.ctn'))
+            ->post(route('reservation.ctn.store'), $this->validPayload([
+                'booking_website' => 'https://spam.example',
+            ]))
+            ->assertRedirect(route('reservation.ctn', absolute: false))
+            ->assertSessionHasErrors(['booking_website']);
+
+        $this->assertDatabaseCount('ctn_reservation_messages', 0);
+        Mail::assertNothingSent();
+    }
+
+    public function test_tampered_select_values_are_rejected(): void
+    {
+        Mail::fake();
+
+        $this->from(route('reservation.ctn'))
+            ->post(route('reservation.ctn.store'), $this->validPayload([
+                'has_roof_box' => '1',
+                'has_roof_extra' => '1',
+                'roof_extra_height' => '1.50',
+                'has_back_extra' => '1',
+                'back_extra_length' => '0.25',
+                'has_trailer' => '1',
+                'trailer_type' => 'Truck',
+                'trailer_length' => '3.50',
+                'trailer_width' => '1.80',
+                'trailer_height' => '1.70',
+            ]))
+            ->assertRedirect(route('reservation.ctn', absolute: false))
+            ->assertSessionHasErrors(['roof_extra_height', 'back_extra_length', 'trailer_type']);
+
+        $this->assertDatabaseCount('ctn_reservation_messages', 0);
+        Mail::assertNothingSent();
+    }
+
     public function test_booking_notification_is_sent_to_configured_backoffice_recipients(): void
     {
         Mail::fake();
@@ -227,8 +276,10 @@ class CtnReservationMessageTest extends TestCase
         $this->assertStringContainsString('R654321', $html);
         $this->assertStringContainsString('Toyota', $html);
         $this->assertStringContainsString('2024', $html);
+        $this->assertStringContainsString('Extra on roof', $html);
         $this->assertStringContainsString('Extra roof height', $html);
         $this->assertStringContainsString('0.50', $html);
+        $this->assertStringContainsString('Extra on back', $html);
         $this->assertStringContainsString('Extra back length', $html);
         $this->assertStringContainsString('1.00', $html);
         $this->assertStringContainsString('Caravan', $html);
