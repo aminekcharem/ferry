@@ -1431,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const label = form.querySelector(`label[for="${CSS.escape(field.id)}"]`);
 
             if (label?.textContent.trim()) {
-                return label.textContent.trim();
+                return label.textContent.trim().replace(/\s*\*$/, '').trim();
             }
         }
 
@@ -1686,7 +1686,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : `<input id="${id}" name="${name}" type="${type}" value="${type === 'date' ? dateInputValue(value) : value}" required ${type === 'date' ? dateAttributesForField(name) : ''} class="${inputClass}">`;
 
         wrapper.innerHTML = `
-            <label for="${id}" class="block text-sm font-medium text-slate-800">${label}</label>
+            <label for="${id}" class="block text-sm font-medium text-slate-800">${label} <span class="text-red-600" aria-hidden="true">*</span></label>
             ${inputMarkup}
         `;
 
