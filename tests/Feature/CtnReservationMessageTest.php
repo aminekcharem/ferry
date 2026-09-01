@@ -31,7 +31,10 @@ class CtnReservationMessageTest extends TestCase
             'return_date' => null,
         ]);
         $this->assertSame('2026-08-20', CtnReservationMessage::first()->outward_date->format('Y-m-d'));
-        Mail::assertNothingSent();
+        Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            return $mail->customerCopy
+                && $mail->hasTo('client@example.com');
+        });
     }
 
     public function test_embedded_reservation_page_hides_menu(): void
@@ -72,8 +75,13 @@ class CtnReservationMessageTest extends TestCase
             ->assertRedirect(route('reservation.ctn', absolute: false));
 
         Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
-            return $mail->hasTo('sales@example.com')
+            return ! $mail->customerCopy
+                && $mail->hasTo('sales@example.com')
                 && $mail->hasTo('manager@example.com');
+        });
+        Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            return $mail->customerCopy
+                && $mail->hasTo('client@example.com');
         });
     }
 
@@ -90,7 +98,7 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_extra' => '1',
             'roof_extra_height' => '0.50',
             'has_back_extra' => '1',
-            'back_extra_length' => '0.75',
+            'back_extra_length' => '1.00',
         ]))->assertRedirect(route('reservation.ctn', absolute: false));
 
         $this->assertDatabaseHas('ctn_reservation_messages', [
@@ -103,7 +111,7 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_extra' => true,
             'roof_extra_height' => '0.50',
             'has_back_extra' => true,
-            'back_extra_length' => '0.75',
+            'back_extra_length' => '1.00',
         ]);
     }
 
@@ -123,7 +131,7 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_extra' => '1',
             'roof_extra_height' => '0.50',
             'has_back_extra' => '1',
-            'back_extra_length' => '0.75',
+            'back_extra_length' => '1.00',
         ]))->assertRedirect(route('reservation.ctn', absolute: false));
 
         $this->assertDatabaseHas('ctn_reservation_messages', [
@@ -196,7 +204,7 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_extra' => true,
             'roof_extra_height' => '0.50',
             'has_back_extra' => true,
-            'back_extra_length' => '0.75',
+            'back_extra_length' => '1.00',
             'has_trailer' => true,
             'trailer_outward' => true,
             'trailer_return' => true,
@@ -222,10 +230,23 @@ class CtnReservationMessageTest extends TestCase
         $this->assertStringContainsString('Extra roof height', $html);
         $this->assertStringContainsString('0.50', $html);
         $this->assertStringContainsString('Extra back length', $html);
-        $this->assertStringContainsString('0.75', $html);
+        $this->assertStringContainsString('1.00', $html);
         $this->assertStringContainsString('Caravan', $html);
         $this->assertStringContainsString('TR 456', $html);
         $this->assertStringContainsString('Height confirmation', $html);
+    }
+
+    public function test_customer_reservation_email_uses_confirmation_intro_and_hides_backoffice_link(): void
+    {
+        $reservation = CtnReservationMessage::create($this->modelPayload());
+
+        $html = (new FerryReservationReceived($reservation, customerCopy: true))->render();
+
+        $this->assertStringContainsString('Thank you for your request', $html);
+        $this->assertStringContainsString('Thank you for submitting your ferry reservation request on Yesmintours.de.', $html);
+        $this->assertStringContainsString('The Yesmin Tours team will review your request and contact you soon for validation.', $html);
+        $this->assertStringContainsString('Client CTN', $html);
+        $this->assertStringNotContainsString('Open in backoffice', $html);
     }
 
     public function test_reservation_email_infers_missing_return_country_for_round_trip(): void
@@ -269,7 +290,7 @@ class CtnReservationMessageTest extends TestCase
         $this->assertLessThan(strpos($trailerSection, 'Width'), strpos($trailerSection, 'Height'));
     }
 
-    public function test_empty_booking_notification_settings_disable_email_notification(): void
+    public function test_empty_booking_notification_settings_disable_backoffice_email_notification(): void
     {
         Mail::fake();
         ApplicationSetting::create([
@@ -280,7 +301,11 @@ class CtnReservationMessageTest extends TestCase
         $this->post(route('reservation.ctn.store'), $this->validPayload())
             ->assertRedirect(route('reservation.ctn', absolute: false));
 
-        Mail::assertNothingSent();
+        Mail::assertSent(FerryReservationReceived::class, 1);
+        Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            return $mail->customerCopy
+                && $mail->hasTo('client@example.com');
+        });
     }
 
     public function test_passport_availability_date_must_be_after_today(): void

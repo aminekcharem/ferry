@@ -31,14 +31,22 @@
     $yesNo = fn (bool $value) => $value ? 'Yes' : 'No';
     $tripType = $reservation->journey_type === 'round_trip' ? 'Round trip' : 'One way';
     $trailerTrip = trim(($reservation->trailer_outward ? 'Outward ' : '') . ($reservation->trailer_return ? 'Return' : ''));
+    $isCustomerCopy = $customerCopy ?? false;
 @endphp
 
 <div style="margin:0;background:#f1f5f9;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
     <div style="max-width:760px;margin:0 auto;">
         <div style="margin:0 0 18px;padding:22px;border-radius:8px;background:#ffffff;border:1px solid #e2e8f0;">
             <p style="margin:0 0 8px;color:#0f766e;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Ferry reservation</p>
-            <h1 style="margin:0;color:#0f172a;font-size:24px;line-height:32px;">New request #{{ $reservation->id }}</h1>
-            <p style="margin:10px 0 0;{{ $muted }}">A new ferry reservation request has been submitted from the website.</p>
+            <h1 style="margin:0;color:#0f172a;font-size:24px;line-height:32px;">
+                {{ $isCustomerCopy ? 'Thank you for your request' : 'New request #' . $reservation->id }}
+            </h1>
+            @if ($isCustomerCopy)
+                <p style="margin:10px 0 0;{{ $muted }}">Thank you for submitting your ferry reservation request on Yesmintours.de.</p>
+                <p style="margin:8px 0 0;{{ $muted }}">The Yesmin Tours team will review your request and contact you soon for validation.</p>
+            @else
+                <p style="margin:10px 0 0;{{ $muted }}">A new ferry reservation request has been submitted from the website.</p>
+            @endif
         </div>
 
         <div style="{{ $sectionStyle }}">
@@ -162,12 +170,18 @@
             </table>
         </div>
 
-        <p style="margin:20px 0 0;">
-            You can edit this reservation at any time by clicking the button below:
-            <a href="{{ route('backoffice.ctn-reservations.show', $reservation) }}" style="display:inline-block;padding:12px 16px;border-radius:6px;background:#0f766e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Open in backoffice</a>
-        </p>
-        <p style="margin:20px 0 0;">
-            This email was sent automatically by the ferry booking system. Please do not reply to this email.
-        </p>
+        @if ($isCustomerCopy)
+            <p style="margin:20px 0 0;{{ $muted }}">
+                This email confirms that we received the information you entered in the reservation form.
+            </p>
+        @else
+            <p style="margin:20px 0 0;">
+                You can edit this reservation at any time by clicking the button below:
+                <a href="{{ route('backoffice.ctn-reservations.show', $reservation) }}" style="display:inline-block;padding:12px 16px;border-radius:6px;background:#0f766e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Open in backoffice</a>
+            </p>
+            <p style="margin:20px 0 0;">
+                This email was sent automatically by the ferry booking system. Please do not reply to this email.
+            </p>
+        @endif
     </div>
 </div>
