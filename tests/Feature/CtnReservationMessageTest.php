@@ -130,13 +130,21 @@ class CtnReservationMessageTest extends TestCase
             ->assertRedirect(route('reservation.ctn', absolute: false));
 
         Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            $html = $mail->render();
+
             return ! $mail->customerCopy
                 && $mail->hasTo('sales@example.com')
-                && $mail->hasTo('manager@example.com');
+                && $mail->hasTo('manager@example.com')
+                && str_contains($html, 'Favorite ferry company')
+                && str_contains($html, 'CTN');
         });
         Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            $html = $mail->render();
+
             return $mail->customerCopy
-                && $mail->hasTo('client@example.com');
+                && $mail->hasTo('client@example.com')
+                && str_contains($html, 'Favorite ferry company')
+                && str_contains($html, 'CTN');
         });
     }
 
@@ -420,12 +428,15 @@ class CtnReservationMessageTest extends TestCase
             ->get(route('backoffice.ctn-reservations.index'))
             ->assertOk()
             ->assertSee('Client CTN')
+            ->assertSee('Favorite ferry company: CTN')
             ->assertSee('client@example.com');
 
         $this->actingAs(User::factory()->create())
             ->get(route('backoffice.ctn-reservations.show', $message))
             ->assertOk()
             ->assertSee('Client CTN')
+            ->assertSee('Favorite ferry company')
+            ->assertSee('CTN')
             ->assertSee('Message test');
     }
 

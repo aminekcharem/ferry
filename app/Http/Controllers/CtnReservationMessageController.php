@@ -139,6 +139,7 @@ class CtnReservationMessageController extends Controller
         }
 
         $reservation = CtnReservationMessage::create($reservationData);
+        $reservation->setAttribute('favorite_ferry_company', $data['favorite_ferry_company']);
 
         $this->sendBookingNotifications($reservation);
 
