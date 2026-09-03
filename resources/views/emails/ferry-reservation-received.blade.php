@@ -6,7 +6,7 @@
     $labelStyle = $fieldStyle . 'width:38%;color:#475569;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;background:#f8fafc;';
     $valueStyle = $fieldStyle . 'color:#0f172a;font-size:14px;font-weight:600;';
     $sectionStyle = 'margin:0 0 18px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;background:#ffffff;';
-    $sectionTitleStyle = 'margin:0;padding:13px 16px;background:#0f766e;color:#ffffff;font-size:16px;line-height:22px;font-weight:700;';
+    $sectionTitleStyle = 'margin:0;padding:13px 16px;background:#0086c2;color:#ffffff;font-size:16px;line-height:22px;font-weight:700;';
     $muted = 'color:#64748b;font-size:13px;line-height:20px;';
     $formatDate = fn ($date) => $date ? $date->format('d/m/Y') : '-';
     $formatPassengerDate = function (?string $date): string {
@@ -37,7 +37,7 @@
 <div style="margin:0;background:#f1f5f9;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
     <div style="max-width:760px;margin:0 auto;">
         <div style="margin:0 0 18px;padding:22px;border-radius:8px;background:#ffffff;border:1px solid #e2e8f0;">
-            <p style="margin:0 0 8px;color:#0f766e;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Ferry reservation</p>
+            <p style="margin:0 0 8px;color:#0086c2;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Ferry reservation</p>
             <h1 style="margin:0;color:#0f172a;font-size:24px;line-height:32px;">
                 {{ $isCustomerCopy ? 'Thank you for your request' : 'New request #' . $reservation->id }}
             </h1>
@@ -53,7 +53,7 @@
             <h2 style="{{ $sectionTitleStyle }}">Client</h2>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                 <tr><td style="{{ $labelStyle }}">Full name</td><td style="{{ $valueStyle }}">{{ $reservation->customer_name }}</td></tr>
-                <tr><td style="{{ $labelStyle }}">Email</td><td style="{{ $valueStyle }}"><a href="mailto:{{ $reservation->customer_email }}" style="color:#0f766e;">{{ $reservation->customer_email }}</a></td></tr>
+                <tr><td style="{{ $labelStyle }}">Email</td><td style="{{ $valueStyle }}"><a href="mailto:{{ $reservation->customer_email }}" style="color:#0086c2;">{{ $reservation->customer_email }}</a></td></tr>
                 <tr><td style="{{ $labelStyle }}">Phone</td><td style="{{ $valueStyle }}">{{ $reservation->customer_phone }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Message</td><td style="{{ $valueStyle }}font-weight:400;white-space:pre-line;">{{ $reservation->customer_message ?: '-' }}</td></tr>
             </table>
@@ -118,7 +118,7 @@
                                     </table>
 
                                     @if (! empty($passenger['return_replacement']))
-                                        <p style="margin:0;padding:10px 12px;background:#ecfdf5;color:#0f766e;font-size:13px;font-weight:700;">Different return passenger</p>
+                                        <p style="margin:0;padding:10px 12px;background:#ecfdf5;color:#0086c2;font-size:13px;font-weight:700;">Different return passenger</p>
                                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                                             <tr><td style="{{ $labelStyle }}">Last name</td><td style="{{ $valueStyle }}">{{ $passenger['return_replacement']['last_name'] ?? '-' }}</td></tr>
                                             <tr><td style="{{ $labelStyle }}">First name</td><td style="{{ $valueStyle }}">{{ $passenger['return_replacement']['first_name'] ?? '-' }}</td></tr>
@@ -180,7 +180,7 @@
         @else
             <p style="margin:20px 0 0;">
                 You can edit this reservation at any time by clicking the button below:
-                <a href="{{ route('backoffice.ctn-reservations.show', $reservation) }}" style="display:inline-block;padding:12px 16px;border-radius:6px;background:#0f766e;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Open in backoffice</a>
+                <a href="{{ route('backoffice.ctn-reservations.show', $reservation) }}" style="display:inline-block;padding:12px 16px;border-radius:6px;background:#0086c2;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Open in backoffice</a>
             </p>
             <p style="margin:20px 0 0;">
                 This email was sent automatically by the ferry booking system. Please do not reply to this email.
