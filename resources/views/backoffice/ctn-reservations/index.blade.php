@@ -110,6 +110,7 @@
                                     </td>
                                     <td class="px-5 py-4 text-slate-700">
                                         <div class="font-semibold text-slate-900">{{ $message->departure_country }}</div>
+                                        <div class="mt-1">{{ $message->favorite_ferry_company ?: '-' }}</div>
                                         <div class="mt-1">{{ $message->journey_type === 'round_trip' ? 'Round trip' : 'One way' }}</div>
                                     </td>
                                     <td class="px-5 py-4 text-slate-700">

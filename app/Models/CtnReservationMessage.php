@@ -23,6 +23,7 @@ class CtnReservationMessage extends Model
         'customer_phone',
         'customer_message',
         'journey_type',
+        'favorite_ferry_company',
         'departure_country',
         'return_country',
         'outward_date',

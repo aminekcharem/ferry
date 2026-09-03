@@ -134,6 +134,10 @@ class CtnReservationMessageController extends Controller
             unset($reservationData['return_country']);
         }
 
+        if (! $this->supportsFavoriteFerryCompanyColumn()) {
+            unset($reservationData['favorite_ferry_company']);
+        }
+
         $reservation = CtnReservationMessage::create($reservationData);
 
         $this->sendBookingNotifications($reservation);
@@ -191,6 +195,11 @@ class CtnReservationMessageController extends Controller
     private function supportsReturnCountryColumn(): bool
     {
         return Schema::hasColumn('ctn_reservation_messages', 'return_country');
+    }
+
+    private function supportsFavoriteFerryCompanyColumn(): bool
+    {
+        return Schema::hasColumn('ctn_reservation_messages', 'favorite_ferry_company');
     }
 
     private function dateFilterForQuery(?string $date): ?string
