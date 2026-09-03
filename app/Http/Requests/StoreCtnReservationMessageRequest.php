@@ -24,6 +24,7 @@ class StoreCtnReservationMessageRequest extends FormRequest
             'customer_message' => ['nullable', 'string', 'max:5000'],
             'booking_website' => ['prohibited'],
             'journey_type' => ['required', 'in:one_way,round_trip'],
+            'favorite_ferry_company' => ['required', 'in:CTN,GNV'],
             'departure_country' => ['required', 'in:Tunisia - Gênes,Tunisia - Civitavecchia,Tunisia - Palerme (Sicile),Tunisia - Marseille,Gênes - Tunisia,Civitavecchia - Tunisia,Palerme (Sicile) - Tunisia,Marseille - Tunisia'],
             'return_country' => ['nullable', 'required_if:journey_type,round_trip', 'in:Tunisia - Gênes,Tunisia - Civitavecchia,Tunisia - Palerme (Sicile),Tunisia - Marseille,Gênes - Tunisia,Civitavecchia - Tunisia,Palerme (Sicile) - Tunisia,Marseille - Tunisia'],
             'outward_date' => ['required', 'string'],

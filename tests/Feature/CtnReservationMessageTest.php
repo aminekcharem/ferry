@@ -27,6 +27,7 @@ class CtnReservationMessageTest extends TestCase
         $this->assertDatabaseHas('ctn_reservation_messages', [
             'customer_email' => 'client@example.com',
             'journey_type' => 'one_way',
+            'favorite_ferry_company' => 'CTN',
             'return_country' => null,
             'return_date' => null,
         ]);
@@ -68,7 +69,11 @@ class CtnReservationMessageTest extends TestCase
         $this->get(route('reservation.ctn'))
             ->assertOk()
             ->assertSee('Full name <span class="text-red-600" aria-hidden="true">*</span>', false)
+            ->assertSee('Favorite ferry company <span class="text-red-600" aria-hidden="true">*</span>', false)
             ->assertSee('Departure country <span class="text-red-600" aria-hidden="true">*</span>', false)
+            ->assertSee('name="trailer_length" type="number" step="0.01" min="0" value="2.90"', false)
+            ->assertSee('name="trailer_height" type="number" step="0.01" min="0" value="1.41"', false)
+            ->assertSee('name="trailer_width" type="number" step="0.01" min="0" value="0.00"', false)
             ->assertSee('Vehicle height confirmation')
             ->assertSee('I confirm that the vehicle height has been entered correctly. <span class="text-red-600" aria-hidden="true">*</span>', false);
     }
@@ -94,6 +99,7 @@ class CtnReservationMessageTest extends TestCase
 
         $this->from(route('reservation.ctn'))
             ->post(route('reservation.ctn.store'), $this->validPayload([
+                'favorite_ferry_company' => 'SNCM',
                 'has_roof_box' => '1',
                 'has_roof_extra' => '1',
                 'roof_extra_height' => '1.50',
@@ -106,7 +112,7 @@ class CtnReservationMessageTest extends TestCase
                 'trailer_height' => '1.70',
             ]))
             ->assertRedirect(route('reservation.ctn', absolute: false))
-            ->assertSessionHasErrors(['roof_extra_height', 'back_extra_length', 'trailer_type']);
+            ->assertSessionHasErrors(['favorite_ferry_company', 'roof_extra_height', 'back_extra_length', 'trailer_type']);
 
         $this->assertDatabaseCount('ctn_reservation_messages', 0);
         Mail::assertNothingSent();
@@ -217,6 +223,7 @@ class CtnReservationMessageTest extends TestCase
     {
         $reservation = CtnReservationMessage::create($this->modelPayload([
             'journey_type' => 'round_trip',
+            'favorite_ferry_company' => 'GNV',
             'return_country' => 'Gênes - Tunisia',
             'return_date' => '2026-08-30',
             'outward_passengers' => [1, 1, 0, 0, 0, 0],
@@ -268,6 +275,8 @@ class CtnReservationMessageTest extends TestCase
         $html = (new FerryReservationReceived($reservation))->render();
 
         $this->assertStringContainsString('Client CTN', $html);
+        $this->assertStringContainsString('Favorite ferry company', $html);
+        $this->assertStringContainsString('GNV', $html);
         $this->assertStringContainsString('Round trip', $html);
         $this->assertStringContainsString('Gênes - Tunisia', $html);
         $this->assertStringContainsString('Passenger quantities', $html);
@@ -501,6 +510,7 @@ class CtnReservationMessageTest extends TestCase
             'customer_phone' => '+216 22 333 444',
             'customer_message' => 'Message test',
             'journey_type' => 'one_way',
+            'favorite_ferry_company' => 'CTN',
             'departure_country' => 'Tunisia - Gênes',
             'outward_date' => '2026-08-20',
             'outward_passengers' => [1, 0, 0, 0, 0, 0],

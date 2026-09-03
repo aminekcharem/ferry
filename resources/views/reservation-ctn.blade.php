@@ -139,6 +139,17 @@
                         </div>
                         <div class="mt-5 space-y-5">
                             <div>
+                                <label for="favorite_ferry_company" class="ui-label">Favorite ferry company <span class="text-red-600" aria-hidden="true">*</span></label>
+                                <select id="favorite_ferry_company" name="favorite_ferry_company" required class="ui-input">
+                                    <option value="">Choose</option>
+                                    @foreach (['CTN', 'GNV'] as $company)
+                                        <option value="{{ $company }}" @selected(old('favorite_ferry_company') === $company)>{{ $company }}</option>
+                                    @endforeach
+                                </select>
+                                @error('favorite_ferry_company')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
+                            </div>
+
+                            <div>
                                 <p class="ui-label">Trip type <span class="text-red-600" aria-hidden="true">*</span></p>
                                 <div class="mt-2 grid gap-3 sm:grid-cols-2">
                                     <label class="flex min-h-12 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition has-[:checked]:border-primary has-[:checked]:bg-primary has-[:checked]:text-white">
@@ -384,15 +395,15 @@
                                     <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
                                         <div>
                                             <label for="trailer_length" class="ui-label">Trailer length <span class="text-red-600" aria-hidden="true">*</span></label>
-                                            <input id="trailer_length" name="trailer_length" type="number" step="0.01" min="0" value="{{ old('trailer_length') }}" class="ui-input">
+                                            <input id="trailer_length" name="trailer_length" type="number" step="0.01" min="0" value="{{ old('trailer_length', '2.90') }}" class="ui-input">
                                         </div>
                                         <div>
                                             <label for="trailer_height" class="ui-label">Trailer height <span class="text-red-600" aria-hidden="true">*</span></label>
-                                            <input id="trailer_height" name="trailer_height" type="number" step="0.01" min="0" value="{{ old('trailer_height') }}" class="ui-input">
+                                            <input id="trailer_height" name="trailer_height" type="number" step="0.01" min="0" value="{{ old('trailer_height', '1.41') }}" class="ui-input">
                                         </div>
                                         <div>
                                             <label for="trailer_width" class="ui-label">Trailer width <span class="text-red-600" aria-hidden="true">*</span></label>
-                                            <input id="trailer_width" name="trailer_width" type="number" step="0.01" min="0" value="{{ old('trailer_width') }}" class="ui-input">
+                                            <input id="trailer_width" name="trailer_width" type="number" step="0.01" min="0" value="{{ old('trailer_width', '0.00') }}" class="ui-input">
                                         </div>
                                     </div>
                                     <input name="trailer_license_number" type="text" value="{{ old('trailer_license_number') }}" placeholder="Trailer license plate" class="ui-input">

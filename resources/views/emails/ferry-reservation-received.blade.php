@@ -62,6 +62,7 @@
         <div style="{{ $sectionStyle }}">
             <h2 style="{{ $sectionTitleStyle }}">Trip</h2>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                <tr><td style="{{ $labelStyle }}">Favorite ferry company</td><td style="{{ $valueStyle }}">{{ $reservation->favorite_ferry_company ?: '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Trip type</td><td style="{{ $valueStyle }}">{{ $tripType }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Departure country</td><td style="{{ $valueStyle }}">{{ $reservation->departure_country }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Return country</td><td style="{{ $valueStyle }}">{{ $reservation->displayReturnCountry() ?: '-' }}</td></tr>
