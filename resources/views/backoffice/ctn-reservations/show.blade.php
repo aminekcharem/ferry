@@ -147,11 +147,30 @@
                             @foreach ($message->passenger_details as $direction => $categories)
                                 @foreach ($categories as $categoryIndex => $passengers)
                                     @foreach ($passengers as $passengerIndex => $passenger)
+                                        @php
+                                            $passengerCopyLine = collect([
+                                                $passenger['last_name'] ?? null,
+                                                $passenger['first_name'] ?? null,
+                                                $formatPassengerDate($passenger['date_of_birth'] ?? null),
+                                                $passenger['passport_number'] ?? null,
+                                            ])->filter(fn ($value) => filled($value) && $value !== '-')->implode("\t");
+                                        @endphp
                                         <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                                            <h3 class="text-sm font-bold text-slate-950">
-                                                {{ $direction === 'return_extra' ? 'Return only' : ucfirst($direction) }}
-                                                - {{ $labels[$categoryIndex] ?? 'Passenger' }} #{{ $passengerIndex + 1 }}
-                                            </h3>
+                                            <div class="flex items-center gap-3">
+                                                <button
+                                                    type="button"
+                                                    class="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-primary-200 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary-200"
+                                                    data-copy-passenger="{{ $passengerCopyLine }}"
+                                                    aria-label="Copy passenger information"
+                                                    title="Copy passenger information"
+                                                >
+                                                    <x-icon name="copy" />
+                                                </button>
+                                                <h3 class="text-sm font-bold text-slate-950">
+                                                    {{ $direction === 'return_extra' ? 'Return only' : ucfirst($direction) }}
+                                                    - {{ $labels[$categoryIndex] ?? 'Passenger' }} #{{ $passengerIndex + 1 }}
+                                                </h3>
+                                            </div>
                                             <dl class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                                                 <div><dt class="text-xs font-bold uppercase text-slate-500">Last name</dt><dd class="text-sm font-semibold text-slate-950">{{ $passenger['last_name'] ?? '-' }}</dd></div>
                                                 <div><dt class="text-xs font-bold uppercase text-slate-500">First name</dt><dd class="text-sm font-semibold text-slate-950">{{ $passenger['first_name'] ?? '-' }}</dd></div>
@@ -165,8 +184,27 @@
                                             </dl>
 
                                             @if (! empty($passenger['return_replacement']))
+                                                @php
+                                                    $returnPassengerCopyLine = collect([
+                                                        $passenger['return_replacement']['last_name'] ?? null,
+                                                        $passenger['return_replacement']['first_name'] ?? null,
+                                                        $formatPassengerDate($passenger['return_replacement']['date_of_birth'] ?? null),
+                                                        $passenger['return_replacement']['passport_number'] ?? null,
+                                                    ])->filter(fn ($value) => filled($value) && $value !== '-')->implode("\t");
+                                                @endphp
                                                 <div class="mt-4 rounded-lg border border-primary-100 bg-white p-4">
-                                                    <h4 class="text-sm font-bold text-slate-950">Different return passenger</h4>
+                                                    <div class="flex items-center gap-3">
+                                                        <button
+                                                            type="button"
+                                                            class="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-primary-200 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary-200"
+                                                            data-copy-passenger="{{ $returnPassengerCopyLine }}"
+                                                            aria-label="Copy passenger information"
+                                                            title="Copy passenger information"
+                                                        >
+                                                            <x-icon name="copy" />
+                                                        </button>
+                                                        <h4 class="text-sm font-bold text-slate-950">Different return passenger</h4>
+                                                    </div>
                                                     <dl class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                                                         <div><dt class="text-xs font-bold uppercase text-slate-500">Last name</dt><dd class="text-sm font-semibold text-slate-950">{{ $passenger['return_replacement']['last_name'] ?? '-' }}</dd></div>
                                                         <div><dt class="text-xs font-bold uppercase text-slate-500">First name</dt><dd class="text-sm font-semibold text-slate-950">{{ $passenger['return_replacement']['first_name'] ?? '-' }}</dd></div>
@@ -220,7 +258,9 @@
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Dimensions</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->vehicle_custom_dimensions ? "{$message->vehicle_length} x {$message->vehicle_height} x {$message->vehicle_width}" : 'Standard dimensions' }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Roof box</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_roof_box ? 'Yes' : 'No' }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Extra height</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_roof_extra ? $message->roof_extra_height : '-' }}</dd></div>
+                        <div><dt class="text-xs font-bold uppercase text-slate-500">Extra roof trip</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_roof_extra && $message->roof_extra_outward ? 'Outward' : '-' }}</dd></div>
                         <div><dt class="text-xs font-bold uppercase text-slate-500">Extra length</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_back_extra ? $message->back_extra_length : '-' }}</dd></div>
+                        <div><dt class="text-xs font-bold uppercase text-slate-500">Extra back trip</dt><dd class="mt-1 font-semibold text-slate-950">{{ $message->has_back_extra && $message->back_extra_outward ? 'Outward' : '-' }}</dd></div>
                     </dl>
                 </section>
 

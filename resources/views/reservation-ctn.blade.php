@@ -337,7 +337,7 @@
                                         <div>
                                             <label class="flex items-start gap-2 text-sm font-semibold text-slate-800">
                                                 <input type="checkbox" name="has_roof_extra" value="1" data-extra-dimension-toggle data-extra-dimension-target="height" @checked(old('has_roof_extra')) class="mt-1 h-4 w-4 rounded border-slate-300 text-primary">
-                                                Something on the roof, e.g. roof box, bikes etc?
+                                                Something on the roof, e.g. roof box etc?
                                             </label>
                                             <div data-extra-dimension-select-wrapper="height" class="mt-3" hidden>
                                                 <label for="roof_extra_height" class="ui-label">Extra height <span class="text-red-600" aria-hidden="true">*</span></label>
@@ -346,6 +346,10 @@
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
                                                 </select>
+                                                <label class="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                                    <input type="checkbox" name="roof_extra_outward" value="1" data-extra-dimension-direction data-extra-dimension-target="height" @checked(old('roof_extra_outward', '1')) disabled class="h-4 w-4 rounded border-slate-300 text-primary">
+                                                    Outward
+                                                </label>
                                             </div>
                                         </div>
                                         <div>
@@ -360,6 +364,10 @@
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
                                                 </select>
+                                                <label class="mt-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
+                                                    <input type="checkbox" name="back_extra_outward" value="1" data-extra-dimension-direction data-extra-dimension-target="length" @checked(old('back_extra_outward', '1')) disabled class="h-4 w-4 rounded border-slate-300 text-primary">
+                                                    Outward
+                                                </label>
                                             </div>
                                         </div>
                                     </div>

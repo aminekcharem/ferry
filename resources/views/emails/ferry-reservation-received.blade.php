@@ -151,8 +151,10 @@
                 <tr><td style="{{ $labelStyle }}">Roof box</td><td style="{{ $valueStyle }}">{{ $yesNo((bool) $reservation->has_roof_box) }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Extra on roof</td><td style="{{ $valueStyle }}">{{ $reservation->has_roof_box ? $yesNo((bool) $reservation->has_roof_extra) : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Extra roof height</td><td style="{{ $valueStyle }}">{{ $reservation->has_roof_extra ? $reservation->roof_extra_height : '-' }}</td></tr>
+                <tr><td style="{{ $labelStyle }}">Extra roof trip</td><td style="{{ $valueStyle }}">{{ $reservation->has_roof_extra ? ($reservation->roof_extra_outward ? 'Outward' : '-') : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Extra on back</td><td style="{{ $valueStyle }}">{{ $reservation->has_roof_box ? $yesNo((bool) $reservation->has_back_extra) : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Extra back length</td><td style="{{ $valueStyle }}">{{ $reservation->has_back_extra ? $reservation->back_extra_length : '-' }}</td></tr>
+                <tr><td style="{{ $labelStyle }}">Extra back trip</td><td style="{{ $valueStyle }}">{{ $reservation->has_back_extra ? ($reservation->back_extra_outward ? 'Outward' : '-') : '-' }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">License plate</td><td style="{{ $valueStyle }}">{{ $reservation->vehicle_license_number }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Owner</td><td style="{{ $valueStyle }}">{{ $reservation->vehicle_owner }}</td></tr>
                 <tr><td style="{{ $labelStyle }}">Height confirmation</td><td style="{{ $valueStyle }}">{{ $yesNo((bool) $reservation->height_acceptance) }}</td></tr>
