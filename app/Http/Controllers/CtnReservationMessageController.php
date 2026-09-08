@@ -126,11 +126,7 @@ class CtnReservationMessageController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        if (! $this->supportsVehicleExtraEquipmentColumns()) {
-            foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'roof_extra_outward', 'has_back_extra', 'back_extra_length', 'back_extra_outward'] as $column) {
-                unset($reservationData[$column]);
-            }
-        }
+        $this->dropUnsupportedVehicleExtraEquipmentColumns($reservationData);
 
         if (! $this->supportsReturnCountryColumn()) {
             unset($reservationData['return_country']);
@@ -184,15 +180,13 @@ class CtnReservationMessageController extends Controller
         }
     }
 
-    private function supportsVehicleExtraEquipmentColumns(): bool
+    private function dropUnsupportedVehicleExtraEquipmentColumns(array &$reservationData): void
     {
         foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'roof_extra_outward', 'has_back_extra', 'back_extra_length', 'back_extra_outward'] as $column) {
             if (! Schema::hasColumn('ctn_reservation_messages', $column)) {
-                return false;
+                unset($reservationData[$column]);
             }
         }
-
-        return true;
     }
 
     private function supportsReturnCountryColumn(): bool
