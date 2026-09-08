@@ -182,6 +182,81 @@ class CtnReservationMessageTest extends TestCase
         ]);
     }
 
+    public function test_vehicle_extra_equipment_fields_are_sent_in_customer_email(): void
+    {
+        Mail::fake();
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload([
+            'vehicle_custom_dimensions' => '1',
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_roof_box' => '1',
+            'has_roof_extra' => '1',
+            'roof_extra_height' => '0.50',
+            'roof_extra_outward' => '1',
+            'has_back_extra' => '1',
+            'back_extra_length' => '1.00',
+            'back_extra_outward' => '1',
+        ]))->assertRedirect(route('reservation.ctn', absolute: false));
+
+        Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            if (! $mail->customerCopy || ! $mail->hasTo('client@example.com')) {
+                return false;
+            }
+
+            $html = $mail->render();
+
+            return str_contains($html, 'Roof box')
+                && str_contains($html, 'Yes')
+                && str_contains($html, 'Extra on roof')
+                && str_contains($html, 'Extra roof height')
+                && str_contains($html, '0.50')
+                && str_contains($html, 'Extra on back')
+                && str_contains($html, 'Extra back length')
+                && str_contains($html, '1.00')
+                && str_contains($html, 'Extra roof trip')
+                && str_contains($html, 'Extra back trip')
+                && str_contains($html, 'Outward');
+        });
+    }
+
+    public function test_vehicle_extra_equipment_email_still_works_before_trip_columns_migration_runs(): void
+    {
+        Mail::fake();
+        Schema::shouldReceive('hasColumn')
+            ->with('ctn_reservation_messages', \Mockery::type('string'))
+            ->andReturnUsing(function (string $table, string $column): bool {
+                return ! in_array($column, ['roof_extra_outward', 'back_extra_outward'], true);
+            });
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload([
+            'vehicle_custom_dimensions' => '1',
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_roof_box' => '1',
+            'has_roof_extra' => '1',
+            'roof_extra_height' => '0.50',
+            'roof_extra_outward' => '1',
+            'has_back_extra' => '1',
+            'back_extra_length' => '1.00',
+            'back_extra_outward' => '1',
+        ]))->assertRedirect(route('reservation.ctn', absolute: false));
+
+        Mail::assertSent(FerryReservationReceived::class, function (FerryReservationReceived $mail): bool {
+            $html = $mail->render();
+
+            return $mail->customerCopy
+                && str_contains($html, 'Roof box')
+                && str_contains($html, 'Yes')
+                && str_contains($html, 'Extra roof height')
+                && str_contains($html, '0.50')
+                && str_contains($html, 'Extra back length')
+                && str_contains($html, '1.00');
+        });
+    }
+
     public function test_reservation_submission_still_works_before_vehicle_extra_equipment_migration_runs(): void
     {
         Mail::fake();
