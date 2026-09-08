@@ -342,7 +342,7 @@
                                             <div data-extra-dimension-select-wrapper="height" class="mt-3" hidden>
                                                 <label for="roof_extra_height" class="ui-label">Extra height <span class="text-red-600" aria-hidden="true">*</span></label>
                                                 <select id="roof_extra_height" name="roof_extra_height" data-extra-dimension-select data-extra-dimension-target="height" data-selected-value="{{ old('roof_extra_height') }}" disabled class="ui-input">
-                                                    @foreach ([['0.50', 'up to 0.5'], ['1.00', 'up to 1.00']] as [$value, $label])
+                                                    @foreach ([['0.50', 'up to 0.5 m'], ['1.00', 'up to 1.00 m']] as [$value, $label])
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
                                                 </select>
@@ -360,7 +360,7 @@
                                             <div data-extra-dimension-select-wrapper="length" class="mt-3" hidden>
                                                 <label for="back_extra_length" class="ui-label">Extra length <span class="text-red-600" aria-hidden="true">*</span></label>
                                                 <select id="back_extra_length" name="back_extra_length" data-extra-dimension-select data-extra-dimension-target="length" data-selected-value="{{ old('back_extra_length') }}" disabled class="ui-input">
-                                                    @foreach ([['0.50', 'up to 0.5'], ['1.00', 'up to 1.00']] as [$value, $label])
+                                                    @foreach ([['0.50', 'up to 0.5 m'], ['1.00', 'up to 1.00 m']] as [$value, $label])
                                                         <option value="{{ $value }}">{{ $label }}</option>
                                                     @endforeach
                                                 </select>
