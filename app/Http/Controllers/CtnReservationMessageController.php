@@ -94,8 +94,8 @@ class CtnReservationMessageController extends Controller
         $hasTrailer = $request->boolean('has_trailer');
         $hasVehicleDimensions = $request->boolean('vehicle_custom_dimensions');
         $hasRoofBox = $request->boolean('has_roof_box');
-        $hasRoofExtra = $hasRoofBox && $request->boolean('has_roof_extra');
-        $hasBackExtra = $hasRoofBox && $request->boolean('has_back_extra');
+        $hasRoofExtra = $request->boolean('has_roof_extra');
+        $hasBackExtra = $request->boolean('has_back_extra');
 
         $reservationData = array_merge($data, [
             'return_country' => $isRoundTrip ? ($data['return_country'] ?? null) : null,

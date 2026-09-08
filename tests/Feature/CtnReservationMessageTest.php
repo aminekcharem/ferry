@@ -182,6 +182,35 @@ class CtnReservationMessageTest extends TestCase
         ]);
     }
 
+    public function test_vehicle_extra_equipment_fields_are_stored_without_roof_box(): void
+    {
+        Mail::fake();
+
+        $this->post(route('reservation.ctn.store'), $this->validPayload([
+            'vehicle_custom_dimensions' => '1',
+            'vehicle_length' => '4.95',
+            'vehicle_width' => '1.90',
+            'vehicle_height' => '2.10',
+            'has_roof_extra' => '1',
+            'roof_extra_height' => '0.50',
+            'roof_extra_outward' => '1',
+            'has_back_extra' => '1',
+            'back_extra_length' => '1.00',
+            'back_extra_outward' => '1',
+        ]))->assertRedirect(route('reservation.ctn', absolute: false));
+
+        $this->assertDatabaseHas('ctn_reservation_messages', [
+            'customer_email' => 'client@example.com',
+            'has_roof_box' => false,
+            'has_roof_extra' => true,
+            'roof_extra_height' => '0.50',
+            'roof_extra_outward' => true,
+            'has_back_extra' => true,
+            'back_extra_length' => '1.00',
+            'back_extra_outward' => true,
+        ]);
+    }
+
     public function test_vehicle_extra_equipment_fields_are_sent_in_customer_email(): void
     {
         Mail::fake();
