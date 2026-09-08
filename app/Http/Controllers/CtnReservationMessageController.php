@@ -108,8 +108,10 @@ class CtnReservationMessageController extends Controller
             'has_roof_box' => $hasRoofBox,
             'has_roof_extra' => $hasRoofExtra,
             'roof_extra_height' => $hasRoofExtra ? ($data['roof_extra_height'] ?? null) : null,
+            'roof_extra_outward' => $hasRoofExtra && $request->boolean('roof_extra_outward'),
             'has_back_extra' => $hasBackExtra,
             'back_extra_length' => $hasBackExtra ? ($data['back_extra_length'] ?? null) : null,
+            'back_extra_outward' => $hasBackExtra && $request->boolean('back_extra_outward'),
             'has_trailer' => $hasTrailer,
             'trailer_outward' => $hasTrailer && $request->boolean('trailer_outward'),
             'trailer_return' => $hasTrailer && $isRoundTrip && $request->boolean('trailer_return'),
@@ -125,7 +127,7 @@ class CtnReservationMessageController extends Controller
         ]);
 
         if (! $this->supportsVehicleExtraEquipmentColumns()) {
-            foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'has_back_extra', 'back_extra_length'] as $column) {
+            foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'roof_extra_outward', 'has_back_extra', 'back_extra_length', 'back_extra_outward'] as $column) {
                 unset($reservationData[$column]);
             }
         }
@@ -184,7 +186,7 @@ class CtnReservationMessageController extends Controller
 
     private function supportsVehicleExtraEquipmentColumns(): bool
     {
-        foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'has_back_extra', 'back_extra_length'] as $column) {
+        foreach (['has_roof_box', 'has_roof_extra', 'roof_extra_height', 'roof_extra_outward', 'has_back_extra', 'back_extra_length', 'back_extra_outward'] as $column) {
             if (! Schema::hasColumn('ctn_reservation_messages', $column)) {
                 return false;
             }

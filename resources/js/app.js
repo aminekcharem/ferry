@@ -1373,6 +1373,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const copyText = async (text) => {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+
+            return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.append(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+    };
+
+    document.querySelectorAll('[data-copy-passenger]').forEach((button) => {
+        const defaultTitle = button.getAttribute('title') || 'Copy passenger information';
+
+        button.addEventListener('click', async () => {
+            try {
+                await copyText(button.dataset.copyPassenger || '');
+                button.setAttribute('title', 'Copied');
+                button.setAttribute('aria-label', 'Copied passenger information');
+                window.setTimeout(() => {
+                    button.setAttribute('title', defaultTitle);
+                    button.setAttribute('aria-label', defaultTitle);
+                }, 1500);
+            } catch (error) {
+                button.setAttribute('title', 'Copy failed');
+                button.setAttribute('aria-label', 'Copy failed');
+            }
+        });
+    });
+
     const form = document.querySelector('#ctn-reservation-form');
 
     if (!form) {
@@ -2347,10 +2384,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const target = toggle.dataset.extraDimensionTarget;
             const wrapper = form.querySelector(`[data-extra-dimension-select-wrapper="${target}"]`);
             const select = form.querySelector(`[data-extra-dimension-select][data-extra-dimension-target="${target}"]`);
+            const direction = form.querySelector(`[data-extra-dimension-direction][data-extra-dimension-target="${target}"]`);
             const showSelect = roofBoxToggle.checked && toggle.checked;
 
             wrapper.hidden = !showSelect;
             select.disabled = !showSelect;
+            direction.disabled = !showSelect;
 
             if (showSelect) {
                 ensureVehicleDimensionsVisible();

@@ -160,8 +160,10 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_box' => '1',
             'has_roof_extra' => '1',
             'roof_extra_height' => '0.50',
+            'roof_extra_outward' => '1',
             'has_back_extra' => '1',
             'back_extra_length' => '1.00',
+            'back_extra_outward' => '1',
         ]))->assertRedirect(route('reservation.ctn', absolute: false));
 
         $this->assertDatabaseHas('ctn_reservation_messages', [
@@ -173,8 +175,10 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_box' => true,
             'has_roof_extra' => true,
             'roof_extra_height' => '0.50',
+            'roof_extra_outward' => true,
             'has_back_extra' => true,
             'back_extra_length' => '1.00',
+            'back_extra_outward' => true,
         ]);
     }
 
@@ -193,8 +197,10 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_box' => '1',
             'has_roof_extra' => '1',
             'roof_extra_height' => '0.50',
+            'roof_extra_outward' => '1',
             'has_back_extra' => '1',
             'back_extra_length' => '1.00',
+            'back_extra_outward' => '1',
         ]))->assertRedirect(route('reservation.ctn', absolute: false));
 
         $this->assertDatabaseHas('ctn_reservation_messages', [
@@ -267,8 +273,10 @@ class CtnReservationMessageTest extends TestCase
             'has_roof_box' => true,
             'has_roof_extra' => true,
             'roof_extra_height' => '0.50',
+            'roof_extra_outward' => true,
             'has_back_extra' => true,
             'back_extra_length' => '1.00',
+            'back_extra_outward' => true,
             'has_trailer' => true,
             'trailer_outward' => true,
             'trailer_return' => true,
@@ -295,9 +303,11 @@ class CtnReservationMessageTest extends TestCase
         $this->assertStringContainsString('2024', $html);
         $this->assertStringContainsString('Extra on roof', $html);
         $this->assertStringContainsString('Extra roof height', $html);
+        $this->assertStringContainsString('Extra roof trip', $html);
         $this->assertStringContainsString('0.50', $html);
         $this->assertStringContainsString('Extra on back', $html);
         $this->assertStringContainsString('Extra back length', $html);
+        $this->assertStringContainsString('Extra back trip', $html);
         $this->assertStringContainsString('1.00', $html);
         $this->assertStringContainsString('Caravan', $html);
         $this->assertStringContainsString('TR 456', $html);
@@ -422,6 +432,20 @@ class CtnReservationMessageTest extends TestCase
         $message = CtnReservationMessage::create($this->modelPayload([
             'customer_name' => 'Client CTN',
             'customer_email' => 'client@example.com',
+            'passenger_details' => [
+                'outward' => [
+                    [
+                        [
+                            'last_name' => 'Passenger',
+                            'first_name' => 'One',
+                            'date_of_birth' => '1990-01-01',
+                            'sexe' => 'male',
+                            'passport_number' => 'P123456',
+                            'passport_availability_date' => '2030-01-01',
+                        ],
+                    ],
+                ],
+            ],
         ]));
 
         $this->actingAs(User::factory()->create())
@@ -437,7 +461,8 @@ class CtnReservationMessageTest extends TestCase
             ->assertSee('Client CTN')
             ->assertSee('Favorite ferry company')
             ->assertSee('CTN')
-            ->assertSee('Message test');
+            ->assertSee('Message test')
+            ->assertSee('data-copy-passenger', false);
     }
 
     public function test_opening_ctn_reservation_marks_it_as_viewed(): void
