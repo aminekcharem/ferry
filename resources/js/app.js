@@ -2385,7 +2385,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const wrapper = form.querySelector(`[data-extra-dimension-select-wrapper="${target}"]`);
             const select = form.querySelector(`[data-extra-dimension-select][data-extra-dimension-target="${target}"]`);
             const direction = form.querySelector(`[data-extra-dimension-direction][data-extra-dimension-target="${target}"]`);
-            const showSelect = roofBoxToggle.checked && toggle.checked;
+            const showSelect = toggle.checked;
 
             wrapper.hidden = !showSelect;
             select.disabled = !showSelect;
@@ -2400,15 +2400,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const syncRoofBox = () => {
-        const hasRoofBox = roofBoxToggle.checked;
-        roofBoxPanel.hidden = !hasRoofBox;
-
-        if (!hasRoofBox) {
-            extraDimensionToggles.forEach((toggle) => {
-                toggle.checked = false;
-            });
-        }
-
+        roofBoxPanel.hidden = false;
         syncExtraDimensionControls();
     };
 
