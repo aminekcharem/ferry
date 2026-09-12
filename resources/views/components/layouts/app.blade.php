@@ -1,5 +1,27 @@
+@props(['lang' => str_replace('_', '-', app()->getLocale())])
+
+@php
+    $reservationLocales = ['en', 'fr', 'de'];
+    $isEmbedded = request()->boolean('embed');
+    $reservationLocale = in_array(request()->route('locale'), $reservationLocales, true)
+        ? request()->route('locale')
+        : 'en';
+    $showReservationLanguageSwitcher = request()->routeIs('reservation.ctn', 'reservation.ctn.localized');
+    $reservationLanguageLabels = [
+        'en' => ['label' => 'Language', 'languages' => ['en' => '🇬🇧 English', 'fr' => '🇫🇷 French', 'de' => '🇩🇪 German']],
+        'fr' => ['label' => 'Langue', 'languages' => ['en' => '🇬🇧 Anglais', 'fr' => '🇫🇷 Francais', 'de' => '🇩🇪 Allemand']],
+        'de' => ['label' => 'Sprache', 'languages' => ['en' => '🇬🇧 Englisch', 'fr' => '🇫🇷 Franzoesisch', 'de' => '🇩🇪 Deutsch']],
+    ];
+    $reservationLanguageRoute = fn (string $targetLocale) => $targetLocale === 'en'
+        ? route('reservation.ctn', array_filter(['embed' => $isEmbedded ? 1 : null]))
+        : route('reservation.ctn.localized', array_filter([
+            'locale' => $targetLocale,
+            'embed' => $isEmbedded ? 1 : null,
+        ]));
+@endphp
+
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ $lang }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,7 +31,6 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="min-h-screen text-slate-950 antialiased">
-        @php($isEmbedded = request()->boolean('embed'))
         <div class="min-h-screen">
             @unless ($isEmbedded)
                 <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
@@ -75,6 +96,17 @@
                                     </a>
                                 @endif
                             @endauth
+
+                            @if ($showReservationLanguageSwitcher)
+                                <label for="main_language" class="sr-only">{{ $reservationLanguageLabels[$reservationLocale]['label'] }}</label>
+                                <select id="main_language" class="ui-input min-h-10 w-auto min-w-40 py-2 text-sm font-semibold" onchange="if (this.value) window.location.href = this.value">
+                                    @foreach ($reservationLocales as $language)
+                                        <option value="{{ $reservationLanguageRoute($language) }}" @selected($reservationLocale === $language)>
+                                            {{ $reservationLanguageLabels[$reservationLocale]['languages'][$language] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </nav>
                     </div>
                 </header>

@@ -11,10 +11,19 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::view('/reservation-ctn', 'reservation-ctn')->name('reservation.ctn');
+Route::get('/reservation-ctn', function () {
+    return view('reservation-ctn', ['locale' => 'en']);
+})->name('reservation.ctn');
 Route::post('/reservation-ctn', [CtnReservationMessageController::class, 'store'])
     ->middleware('throttle:10,1')
     ->name('reservation.ctn.store');
+Route::get('/reservation-ctn/{locale}', function (string $locale) {
+    return view('reservation-ctn', ['locale' => $locale]);
+})->whereIn('locale', ['en', 'fr', 'de'])->name('reservation.ctn.localized');
+Route::post('/reservation-ctn/{locale}', [CtnReservationMessageController::class, 'store'])
+    ->whereIn('locale', ['en', 'fr', 'de'])
+    ->middleware('throttle:10,1')
+    ->name('reservation.ctn.store.localized');
 
 Route::prefix('vehicle-specifications')->middleware('throttle:30,1')->group(function (): void {
     Route::get('/years', [VehicleSpecificationController::class, 'years'])->name('vehicle-specifications.years');

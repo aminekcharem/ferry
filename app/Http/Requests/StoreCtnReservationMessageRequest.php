@@ -4,11 +4,38 @@ namespace App\Http\Requests;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreCtnReservationMessageRequest extends FormRequest
 {
     private const ACCEPTED_DATE_FORMATS = ['Y-m-d', 'd/m/Y'];
+    private const CTN_ROUTES = [
+        'Tunisia - Gênes',
+        'Tunisia - Civitavecchia',
+        'Tunisia - Palerme (Sicile)',
+        'Tunisia - Marseille',
+        'Gênes - Tunisia',
+        'Civitavecchia - Tunisia',
+        'Palerme (Sicile) - Tunisia',
+        'Marseille - Tunisia',
+        'Tunisie - Genève',
+        'Tunisie - Civitavecchia',
+        'Tunisie - Palerme (Sicile)',
+        'Tunisie - Marseille',
+        'Genève - Tunisie',
+        'Civitavecchia - Tunisie',
+        'Palerme (Sicile) - Tunisie',
+        'Marseille - Tunisie',
+        'Tunesien - Genua',
+        'Tunesien - Civitavecchia',
+        'Tunesien - Palermo (Sizilien)',
+        'Tunesien - Marseille',
+        'Genua - Tunesien',
+        'Civitavecchia - Tunesien',
+        'Palermo (Sizilien) - Tunesien',
+        'Marseille - Tunesien',
+    ];
 
     public function authorize(): bool
     {
@@ -25,8 +52,8 @@ class StoreCtnReservationMessageRequest extends FormRequest
             'booking_website' => ['prohibited'],
             'journey_type' => ['required', 'in:one_way,round_trip'],
             'favorite_ferry_company' => ['required', 'in:CTN,GNV'],
-            'departure_country' => ['required', 'in:Tunisia - Gênes,Tunisia - Civitavecchia,Tunisia - Palerme (Sicile),Tunisia - Marseille,Gênes - Tunisia,Civitavecchia - Tunisia,Palerme (Sicile) - Tunisia,Marseille - Tunisia'],
-            'return_country' => ['nullable', 'required_if:journey_type,round_trip', 'in:Tunisia - Gênes,Tunisia - Civitavecchia,Tunisia - Palerme (Sicile),Tunisia - Marseille,Gênes - Tunisia,Civitavecchia - Tunisia,Palerme (Sicile) - Tunisia,Marseille - Tunisia'],
+            'departure_country' => ['required', Rule::in(self::CTN_ROUTES)],
+            'return_country' => ['nullable', 'required_if:journey_type,round_trip', Rule::in(self::CTN_ROUTES)],
             'outward_date' => ['required', 'string'],
             'return_date' => ['nullable', 'required_if:journey_type,round_trip', 'string'],
             'outward_passengers' => ['required', 'array', 'size:6'],
