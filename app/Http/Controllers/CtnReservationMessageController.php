@@ -141,13 +141,29 @@ class CtnReservationMessageController extends Controller
 
         $this->sendBookingNotifications($reservation);
 
+        $locale = in_array($request->route('locale'), ['en', 'fr', 'de'], true)
+            ? $request->route('locale')
+            : 'en';
+
         $redirectParameters = $request->boolean('embed')
             ? ['embed' => 1, 'reservation_sent' => 1]
             : [];
 
+        $successMessages = [
+            'en' => 'Your ferry reservation request has been sent.',
+            'fr' => 'Votre demande de reservation ferry a bien ete envoyee.',
+            'de' => 'Ihre Faehrreservierungsanfrage wurde gesendet.',
+        ];
+
+        if ($locale === 'en' && ! $request->route('locale')) {
+            return redirect()
+                ->route('reservation.ctn', $redirectParameters)
+                ->with('status', $successMessages[$locale]);
+        }
+
         return redirect()
-            ->route('reservation.ctn', $redirectParameters)
-            ->with('status', 'Your ferry reservation request has been sent.');
+            ->route('reservation.ctn.localized', array_merge(['locale' => $locale], $redirectParameters))
+            ->with('status', $successMessages[$locale]);
     }
 
     private function sendBookingNotifications(CtnReservationMessage $reservation): void

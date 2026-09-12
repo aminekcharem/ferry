@@ -1225,7 +1225,7 @@ const setTodayAsMinimumDate = () => {
     });
 };
 
-const fillSelect = (select, options, placeholder) => {
+const fillSelect = (select, options, placeholder, otherLabel = 'Other') => {
     const selectedValue = select.dataset.selectedValue || '';
 
     select.replaceChildren(new Option(placeholder, ''));
@@ -1235,7 +1235,7 @@ const fillSelect = (select, options, placeholder) => {
         select.add(item);
     });
 
-    const other = new Option('Other', 'Other');
+    const other = new Option(otherLabel, 'Other');
     other.selected = selectedValue === 'Other';
     select.add(other);
 };
@@ -1288,12 +1288,14 @@ const getAvailableModelYears = (brand, model) => {
     return [...years].sort((firstYear, secondYear) => secondYear - firstYear);
 };
 
-const fillYearSelect = (select, brand = '', model = '') => {
+const fillYearSelect = (select, brand = '', model = '', labels = {}) => {
     const selectedYear = select.dataset.selectedYear || '';
     const years = getAvailableModelYears(brand, model);
+    const selectYear = labels.selectYear || 'Select year';
+    const yearNotFound = labels.yearNotFound || 'Year not found';
     const placeholder = brand && model
-        ? (years.length ? 'Select year' : 'Year not found')
-        : 'Select year';
+        ? (years.length ? selectYear : yearNotFound)
+        : selectYear;
 
     select.replaceChildren(new Option(placeholder, ''));
 
@@ -1449,6 +1451,51 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const serverErrors = readJsonScript('ctn-validation-errors');
     const oldInput = readJsonScript('ctn-old-input');
+    const copy = {
+        fieldFallback: 'This field',
+        required: '{label} is required.',
+        typeMismatch: 'Enter a valid {label}.',
+        patternMismatch: '{label} has an invalid format.',
+        rangeUnderflow: '{label} must be greater than or equal to {min}.',
+        rangeOverflow: '{label} must be less than or equal to {max}.',
+        stepMismatch: '{label} must match the requested step.',
+        tooLong: '{label} is too long.',
+        invalid: '{label} is invalid.',
+        laterDate: 'Choose a later date.',
+        earlierDate: 'Choose an earlier date.',
+        returnDateOrder: 'Return date must be after or equal to outward date.',
+        select: 'Select',
+        male: 'Male',
+        female: 'Female',
+        willReturn: 'Will this outward passenger return?',
+        yes: 'Yes',
+        no: 'No',
+        returnPassengerLastName: 'Return passenger last name',
+        returnPassengerFirstName: 'Return passenger first name',
+        returnPassengerDateOfBirth: 'Return passenger date of birth',
+        returnPassengerGender: 'Return passenger gender',
+        returnPassengerPassportNumber: 'Return passenger passport number',
+        returnPassengerPassportAvailabilityDate: 'Return passenger passport availability date',
+        outwardTitle: 'Outward - {category} #{number}',
+        returnOnlyTitle: 'Return only - {category} #{number}',
+        lastName: 'Last name',
+        firstName: 'First name',
+        dateOfBirth: 'Date of birth',
+        gender: 'Gender',
+        passportNumber: 'Passport number',
+        passportAvailabilityDate: 'Passport availability date',
+        selectYear: 'Select year',
+        yearNotFound: 'Year not found',
+        searchingYears: 'Searching model years...',
+        selectBrand: 'Select brand',
+        selectModel: 'Select model',
+        other: 'Other',
+        ...readJsonScript('ctn-ui-copy'),
+    };
+    const formatCopy = (key, replacements = {}) => Object.entries(replacements).reduce(
+        (message, [replacementKey, value]) => message.replaceAll(`{${replacementKey}}`, value),
+        copy[key] || '',
+    );
     const oldFieldValues = {};
     const flattenOldInput = (value, prefix = '') => {
         if (value === null || typeof value !== 'object' || Array.isArray(value) && value.every((item) => item === null || typeof item !== 'object')) {
@@ -1472,45 +1519,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        return field.placeholder || field.name.replace(/[_\[\]]+/g, ' ').trim() || 'This field';
+        return field.placeholder || field.name.replace(/[_\[\]]+/g, ' ').trim() || copy.fieldFallback;
     };
 
     const validationMessageFor = (field) => {
         const label = fieldLabel(field);
 
         if (field.validity.valueMissing) {
-            return `${label} is required.`;
+            return formatCopy('required', { label });
         }
 
         if (field.validity.typeMismatch) {
-            return `Enter a valid ${label.toLowerCase()}.`;
+            return formatCopy('typeMismatch', { label: label.toLowerCase() });
         }
 
         if (field.validity.patternMismatch) {
-            return `${label} has an invalid format.`;
+            return formatCopy('patternMismatch', { label });
         }
 
         if (field.validity.rangeUnderflow) {
-            return `${label} must be greater than or equal to ${field.min}.`;
+            return formatCopy('rangeUnderflow', { label, min: field.min });
         }
 
         if (field.validity.rangeOverflow) {
-            return `${label} must be less than or equal to ${field.max}.`;
+            return formatCopy('rangeOverflow', { label, max: field.max });
         }
 
         if (field.validity.stepMismatch) {
-            return `${label} must match the requested step.`;
+            return formatCopy('stepMismatch', { label });
         }
 
         if (field.validity.tooLong) {
-            return `${label} is too long.`;
+            return formatCopy('tooLong', { label });
         }
 
         if (field.validity.customError) {
             return field.validationMessage;
         }
 
-        return field.validationMessage || `${label} is invalid.`;
+        return field.validationMessage || formatCopy('invalid', { label });
     };
 
     const errorAnchorFor = (field) => {
@@ -1675,13 +1722,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (input.value && input.min && input.value < input.min) {
-            input.setCustomValidity('Choose a later date.');
+            input.setCustomValidity(copy.laterDate);
 
             return false;
         }
 
         if (input.value && input.max && input.value > input.max) {
-            input.setCustomValidity('Choose an earlier date.');
+            input.setCustomValidity(copy.earlierDate);
 
             return false;
         }
@@ -1702,7 +1749,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!returnInput?.disabled && outwardInput?.value && returnInput?.value) {
             if (returnInput.value < outwardInput.value) {
-                returnInput.setCustomValidity('Return date must be after or equal to outward date.');
+                returnInput.setCustomValidity(copy.returnDateOrder);
                 valid = false;
             }
         }
@@ -1716,9 +1763,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const inputMarkup =
             type === 'select'
                 ? `<select id="${id}" name="${name}" required class="${inputClass}">
-                    <option value="">Select</option>
-                    <option value="male"${value === 'male' ? ' selected' : ''}>Male</option>
-                    <option value="female"${value === 'female' ? ' selected' : ''}>Female</option>
+                    <option value="">${copy.select}</option>
+                    <option value="male"${value === 'male' ? ' selected' : ''}>${copy.male}</option>
+                    <option value="female"${value === 'female' ? ' selected' : ''}>${copy.female}</option>
                 </select>`
                 : `<input id="${id}" name="${name}" type="${type}" value="${type === 'date' ? dateInputValue(value) : value}" required ${type === 'date' ? dateAttributesForField(name) : ''} class="${inputClass}">`;
 
@@ -1736,15 +1783,15 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.className = 'mt-4 rounded-md border border-primary-100 bg-primary-50 p-3';
 
         wrapper.innerHTML = `
-            <p class="text-sm font-semibold text-slate-900">Will this outward passenger return?</p>
+            <p class="text-sm font-semibold text-slate-900">${copy.willReturn}</p>
             <div class="mt-3 grid gap-2 sm:grid-cols-2">
                 <label class="flex items-center gap-2 text-sm font-medium text-slate-800">
                     <input type="radio" name="${prefix}[will_return]" value="yes" data-will-return-toggle${value !== 'no' ? ' checked' : ''}>
-                    Yes
+                    ${copy.yes}
                 </label>
                 <label class="flex items-center gap-2 text-sm font-medium text-slate-800">
                     <input type="radio" name="${prefix}[will_return]" value="no" data-will-return-toggle${value === 'no' ? ' checked' : ''}>
-                    No
+                    ${copy.no}
                 </label>
             </div>
         `;
@@ -1756,37 +1803,37 @@ document.addEventListener('DOMContentLoaded', () => {
         replacement.append(
             createField(
                 'text',
-                'Return passenger last name',
+                copy.returnPassengerLastName,
                 `${prefix}[return_replacement][last_name]`,
                 existingValues[`${prefix}[return_replacement][last_name]`] || '',
             ),
             createField(
                 'text',
-                'Return passenger first name',
+                copy.returnPassengerFirstName,
                 `${prefix}[return_replacement][first_name]`,
                 existingValues[`${prefix}[return_replacement][first_name]`] || '',
             ),
             createField(
                 'date',
-                'Return passenger date of birth',
+                copy.returnPassengerDateOfBirth,
                 `${prefix}[return_replacement][date_of_birth]`,
                 existingValues[`${prefix}[return_replacement][date_of_birth]`] || '',
             ),
             createField(
                 'select',
-                'Return passenger gender',
+                copy.returnPassengerGender,
                 `${prefix}[return_replacement][sexe]`,
                 existingValues[`${prefix}[return_replacement][sexe]`] || '',
             ),
             createField(
                 'text',
-                'Return passenger passport number',
+                copy.returnPassengerPassportNumber,
                 `${prefix}[return_replacement][passport_number]`,
                 existingValues[`${prefix}[return_replacement][passport_number]`] || '',
             ),
             createField(
                 'date',
-                'Return passenger passport availability date',
+                copy.returnPassengerPassportAvailabilityDate,
                 `${prefix}[return_replacement][passport_availability_date]`,
                 existingValues[`${prefix}[return_replacement][passport_availability_date]`] || '',
             ),
@@ -1921,17 +1968,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const title = document.createElement('h4');
                 title.className = 'text-sm font-semibold text-slate-950';
-                title.textContent = `Outward - ${category} #${index + 1}`;
+                title.textContent = formatCopy('outwardTitle', { category, number: index + 1 });
 
                 const grid = document.createElement('div');
                 grid.className = 'mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3';
                 grid.append(
-                    createField('text', 'Last name', `${prefix}[last_name]`, existingValues[`${prefix}[last_name]`] || ''),
-                    createField('text', 'First name', `${prefix}[first_name]`, existingValues[`${prefix}[first_name]`] || ''),
-                    createField('date', 'Date of birth', `${prefix}[date_of_birth]`, existingValues[`${prefix}[date_of_birth]`] || ''),
-                    createField('select', 'Gender', `${prefix}[sexe]`, existingValues[`${prefix}[sexe]`] || ''),
-                    createField('text', 'Passport number', `${prefix}[passport_number]`, existingValues[`${prefix}[passport_number]`] || ''),
-                    createField('date', 'Passport availability date', `${prefix}[passport_availability_date]`, existingValues[`${prefix}[passport_availability_date]`] || ''),
+                    createField('text', copy.lastName, `${prefix}[last_name]`, existingValues[`${prefix}[last_name]`] || ''),
+                    createField('text', copy.firstName, `${prefix}[first_name]`, existingValues[`${prefix}[first_name]`] || ''),
+                    createField('date', copy.dateOfBirth, `${prefix}[date_of_birth]`, existingValues[`${prefix}[date_of_birth]`] || ''),
+                    createField('select', copy.gender, `${prefix}[sexe]`, existingValues[`${prefix}[sexe]`] || ''),
+                    createField('text', copy.passportNumber, `${prefix}[passport_number]`, existingValues[`${prefix}[passport_number]`] || ''),
+                    createField('date', copy.passportAvailabilityDate, `${prefix}[passport_availability_date]`, existingValues[`${prefix}[passport_availability_date]`] || ''),
                 );
 
                 panel.append(title, grid);
@@ -1953,17 +2000,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const title = document.createElement('h4');
                     title.className = 'text-sm font-semibold text-slate-950';
-                    title.textContent = `Return only - ${category} #${returnOnlyIndex + 1}`;
+                    title.textContent = formatCopy('returnOnlyTitle', { category, number: returnOnlyIndex + 1 });
 
                     const grid = document.createElement('div');
                     grid.className = 'mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3';
                     grid.append(
-                        createField('text', 'Last name', `${prefix}[last_name]`, existingValues[`${prefix}[last_name]`] || ''),
-                        createField('text', 'First name', `${prefix}[first_name]`, existingValues[`${prefix}[first_name]`] || ''),
-                        createField('date', 'Date of birth', `${prefix}[date_of_birth]`, existingValues[`${prefix}[date_of_birth]`] || ''),
-                        createField('select', 'Gender', `${prefix}[sexe]`, existingValues[`${prefix}[sexe]`] || ''),
-                        createField('text', 'Passport number', `${prefix}[passport_number]`, existingValues[`${prefix}[passport_number]`] || ''),
-                        createField('date', 'Passport availability date', `${prefix}[passport_availability_date]`, existingValues[`${prefix}[passport_availability_date]`] || ''),
+                        createField('text', copy.lastName, `${prefix}[last_name]`, existingValues[`${prefix}[last_name]`] || ''),
+                        createField('text', copy.firstName, `${prefix}[first_name]`, existingValues[`${prefix}[first_name]`] || ''),
+                        createField('date', copy.dateOfBirth, `${prefix}[date_of_birth]`, existingValues[`${prefix}[date_of_birth]`] || ''),
+                        createField('select', copy.gender, `${prefix}[sexe]`, existingValues[`${prefix}[sexe]`] || ''),
+                        createField('text', copy.passportNumber, `${prefix}[passport_number]`, existingValues[`${prefix}[passport_number]`] || ''),
+                        createField('date', copy.passportAvailabilityDate, `${prefix}[passport_availability_date]`, existingValues[`${prefix}[passport_availability_date]`] || ''),
                     );
 
                     panel.append(title, grid);
@@ -2208,7 +2255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const brand = brandSelect.value;
         const model = modelSelect.value;
 
-        const fallbackYears = fillYearSelect(yearSelect, brand, model);
+        const fallbackYears = fillYearSelect(yearSelect, brand, model, copy);
         syncManualVehicleYear(fallbackYears.length === 0);
 
         if (!brand || brand === 'Other' || !model || model === 'Other') {
@@ -2216,7 +2263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const requestId = ++yearRequestId;
-        yearSelect.replaceChildren(new Option('Searching model years...', ''));
+        yearSelect.replaceChildren(new Option(copy.searchingYears, ''));
         yearSelect.disabled = true;
 
         try {
@@ -2230,13 +2277,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Never let an empty remote response erase locally verified generations.
             const fallbackYears = getAvailableModelYears(brand, model);
             const years = result.years?.length ? result.years : fallbackYears;
-            yearSelect.replaceChildren(new Option(years.length ? 'Select year' : 'Year not found', ''));
+            yearSelect.replaceChildren(new Option(years.length ? copy.selectYear : copy.yearNotFound, ''));
             years.forEach((year) => yearSelect.add(new Option(String(year), String(year))));
             yearSelect.disabled = years.length === 0;
             syncManualVehicleYear(years.length === 0);
         } catch {
             if (requestId === yearRequestId) {
-                const years = fillYearSelect(yearSelect, brand, model);
+                const years = fillYearSelect(yearSelect, brand, model, copy);
                 syncManualVehicleYear(years.length === 0);
             }
         }
@@ -2289,12 +2336,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    fillYearSelect(yearSelect);
+    fillYearSelect(yearSelect, '', '', copy);
     syncManualVehicleYear(false);
-    fillSelect(brandSelect, Object.keys(carCatalog).sort(), 'Select brand');
+    fillSelect(brandSelect, Object.keys(carCatalog).sort(), copy.selectBrand, copy.other);
     if (brandSelect.value) {
         modelSelect.disabled = false;
-        fillSelect(modelSelect, brandSelect.value === 'Other' ? [] : carCatalog[brandSelect.value] || [], 'Select model');
+        fillSelect(modelSelect, brandSelect.value === 'Other' ? [] : carCatalog[brandSelect.value] || [], copy.selectModel, copy.other);
         if (brandSelect.value === 'Other') {
             modelSelect.value = 'Other';
         }
@@ -2315,9 +2362,9 @@ document.addEventListener('DOMContentLoaded', () => {
         yearManualToggle.checked = false;
         yearManualInput.value = '';
         yearRequestId += 1;
-        fillYearSelect(yearSelect);
+        fillYearSelect(yearSelect, '', '', copy);
         syncManualVehicleYear(false);
-        fillSelect(modelSelect, brandIsOther ? [] : carCatalog[brand] || [], 'Select model');
+        fillSelect(modelSelect, brandIsOther ? [] : carCatalog[brand] || [], copy.selectModel, copy.other);
         if (brandIsOther) {
             modelSelect.value = 'Other';
         }
