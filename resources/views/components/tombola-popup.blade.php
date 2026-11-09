@@ -33,11 +33,21 @@
 <div data-tombola data-locale="{{ $locale }}" data-status-url="{{ route('tombola.status', absolute: false) }}" data-spin-url="{{ route('tombola.spin', absolute: false) }}" data-result-url="{{ route('tombola.result', absolute: false) }}">
     <script type="application/json" data-tombola-copy>@json($copy)</script>
     <button type="button" class="ui-button-primary tombola-launcher" data-tombola-open hidden>{{ $copy['open'] }}</button>
-    <dialog class="ui-modal tombola-modal rounded-lg border border-primary-100 bg-white p-0 shadow-xl" data-tombola-dialog aria-labelledby="tombola-title" aria-describedby="tombola-intro">
-        <div class="p-5 sm:p-7">
-            <div class="flex items-start justify-between gap-3"><h2 id="tombola-title" class="text-2xl font-bold text-primary-900">{{ $copy['title'] }}</h2><button type="button" class="ui-button-secondary shrink-0" data-tombola-close aria-label="{{ $copy['close'] }}"><span aria-hidden="true">×</span></button></div>
-            <p id="tombola-intro" class="mt-2 text-sm text-slate-600">{{ $copy['intro'] }}</p>
-            <div class="tombola-wheel-wrap" aria-hidden="true">
+    <dialog class="ui-modal tombola-modal overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-2xl" data-tombola-dialog aria-labelledby="tombola-title" aria-describedby="tombola-intro">
+        <div class="max-h-[92dvh] overflow-y-auto" data-tombola-scroll>
+            <header class="flex items-start justify-between gap-4 bg-primary-900 px-5 py-5 text-white sm:px-7">
+                <div class="flex items-start gap-3">
+                    <span class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-primary-100"><x-icon name="gift" class="h-5 w-5" /></span>
+                    <div>
+                        <h2 id="tombola-title" class="text-xl font-bold sm:text-2xl">{{ $copy['title'] }}</h2>
+                        <p id="tombola-intro" class="mt-1 text-sm leading-6 text-primary-100">{{ $copy['intro'] }}</p>
+                    </div>
+                </div>
+                <button type="button" class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-white/80 transition hover:bg-white/10 hover:text-white focus-visible:outline-white" data-tombola-close aria-label="{{ $copy['close'] }}"><x-icon name="x" class="h-5 w-5" /></button>
+            </header>
+            <div class="p-5 sm:p-7">
+            <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-1">
+                <div class="tombola-wheel-wrap" aria-hidden="true">
                 <div class="tombola-pointer"></div>
                 <svg class="tombola-wheel" data-tombola-wheel viewBox="0 0 300 300">
                     <circle cx="150" cy="150" r="145" fill="#ffffff" />
@@ -55,19 +65,24 @@
                     @endforeach
                     <circle cx="150" cy="150" r="22" fill="white" stroke="#b8e9ff" stroke-width="4" />
                 </svg>
+                </div>
             </div>
-            <p class="mb-4 text-center text-sm font-semibold text-slate-600">20 % · 30 % · {{ $copy['lost'] }}</p>
-            <div role="status" aria-live="polite" data-tombola-result class="ui-panel mb-4 p-4 text-center" hidden></div>
-            <p role="alert" data-tombola-error class="mb-4 text-sm font-semibold text-red-700" hidden></p>
-            <form data-tombola-form class="grid gap-4">
+            <div role="status" aria-live="polite" data-tombola-result class="ui-panel my-4 rounded-xl p-4 text-center" hidden></div>
+            <p role="alert" data-tombola-error class="my-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold leading-6 text-red-800" hidden></p>
+            <form data-tombola-form class="mt-5 grid gap-4">
                 <div class="grid gap-4 sm:grid-cols-2">
                     @foreach (['last_name', 'first_name', 'email', 'phone'] as $field)
-                        <div><label class="ui-label" for="tombola-{{ $field }}">{{ $copy[$field] }}</label><input id="tombola-{{ $field }}" class="ui-input" name="{{ $field }}" type="{{ $field === 'email' ? 'email' : ($field === 'phone' ? 'tel' : 'text') }}" autocomplete="{{ ['last_name' => 'family-name', 'first_name' => 'given-name', 'email' => 'email', 'phone' => 'tel'][$field] }}" maxlength="{{ $field === 'phone' ? 40 : ($field === 'email' ? 255 : 100) }}" aria-describedby="tombola-error-{{ $field }}" required><p id="tombola-error-{{ $field }}" data-tombola-field-error="{{ $field }}" class="mt-1 text-sm text-red-700" hidden></p></div>
+                        <div>
+                            <label class="ui-label" for="tombola-{{ $field }}">{{ $copy[$field] }}</label>
+                            <input id="tombola-{{ $field }}" class="ui-input min-h-12" name="{{ $field }}" type="{{ $field === 'email' ? 'email' : ($field === 'phone' ? 'tel' : 'text') }}" autocomplete="{{ ['last_name' => 'family-name', 'first_name' => 'given-name', 'email' => 'email', 'phone' => 'tel'][$field] }}" maxlength="{{ $field === 'phone' ? 40 : ($field === 'email' ? 255 : 100) }}" aria-describedby="tombola-error-{{ $field }}" required>
+                            <p id="tombola-error-{{ $field }}" data-tombola-field-error="{{ $field }}" class="mt-1 text-sm text-red-700" hidden></p>
+                        </div>
                     @endforeach
                 </div>
-                <p class="text-xs leading-relaxed text-slate-500">{{ $copy['notice'] }}</p>
-                <button type="submit" class="ui-button-primary w-full" data-tombola-submit>{{ $copy['spin'] }}</button>
+                <p class="rounded-lg bg-slate-50 px-4 py-3 text-xs leading-relaxed text-slate-600">{{ $copy['notice'] }}</p>
+                <button type="submit" class="ui-button-primary min-h-12 w-full rounded-lg text-base" data-tombola-submit>{{ $copy['spin'] }}</button>
             </form>
+            </div>
         </div>
     </dialog>
 </div>
