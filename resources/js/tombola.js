@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!root) return;
     const copy = JSON.parse(root.querySelector('[data-tombola-copy]').textContent);
     const dialog = root.querySelector('[data-tombola-dialog]');
+    const scrollContent = root.querySelector('[data-tombola-scroll]');
     const launcher = root.querySelector('[data-tombola-open]');
     const form = root.querySelector('[data-tombola-form]');
     const submit = root.querySelector('[data-tombola-submit]');
@@ -67,8 +68,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const wheel = root.querySelector('[data-tombola-wheel]');
         const duration = animate && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 3000 : 0;
         if (duration) {
-            const animation = wheel.animate([{ transform: `rotate(${rotation}deg)` }, { transform: `rotate(${target}deg)` }], { duration, easing: 'cubic-bezier(.15,.75,.15,1)', fill: 'forwards' });
-            await animation.finished;
+            scrollContent.classList.add('is-spinning');
+            try {
+                const animation = wheel.animate([{ transform: `rotate(${rotation}deg)` }, { transform: `rotate(${target}deg)` }], { duration, easing: 'cubic-bezier(.15,.75,.15,1)', fill: 'forwards' });
+                await animation.finished;
+            } finally {
+                scrollContent.classList.remove('is-spinning');
+            }
         } else {
             wheel.animate([{ transform: `rotate(${angle}deg)` }, { transform: `rotate(${angle}deg)` }], { duration: 1, fill: 'forwards' });
         }
