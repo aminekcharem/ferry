@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BackofficeSettingController;
+use App\Http\Controllers\Admin\TombolaController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CtnReservationMessageController;
@@ -38,6 +39,11 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::middleware('admin')->prefix('/backoffice/tombola')->name('backoffice.tombola.')->group(function (): void {
+        Route::get('/', [TombolaController::class, 'index'])->name('index');
+        Route::patch('/', [TombolaController::class, 'update'])->name('update');
+        Route::post('/reset', [TombolaController::class, 'reset'])->name('reset');
+    });
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/backoffice/reservations-ctn', [CtnReservationMessageController::class, 'index'])
         ->name('backoffice.ctn-reservations.index');

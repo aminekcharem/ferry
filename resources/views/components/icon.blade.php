@@ -68,6 +68,9 @@
             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             @break
+        @case('gift')
+            <path d="M3 8h18v4H3zM5 12v9h14v-9M12 8v13M12 8H8a3 3 0 1 1 3-3l1 3Zm0 0h4a3 3 0 1 0-3-3l-1 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            @break
         @case('x')
             <path d="m18 6-12 12M6 6l12 12" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
             @break

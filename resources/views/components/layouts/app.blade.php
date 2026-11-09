@@ -51,6 +51,7 @@
                                     <span>Dashboard</span>
                                 </a>
                                 @if (auth()->user()->isAdmin())
+                                    <a class="ui-button-secondary" href="{{ route('backoffice.tombola.index') }}"><x-icon name="gift" /><span>Popup / Tombola</span></a>
                                     <a class="ui-button-secondary" href="{{ route('backoffice.settings.edit') }}">
                                         <x-icon name="settings" />
                                         <span>Settings</span>
@@ -115,6 +116,9 @@
             <main>
                 {{ $slot }}
             </main>
+            @if (request()->routeIs('reservation.ctn', 'reservation.ctn.localized'))
+                <x-tombola-popup :locale="$reservationLocale" />
+            @endif
         </div>
     </body>
 </html>

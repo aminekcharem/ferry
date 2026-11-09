@@ -1,3 +1,5 @@
+import './tombola';
+
 const carCatalog = {
     Acura: ['ILX', 'Integra', 'MDX', 'NSX', 'RDX', 'RLX', 'TLX', 'TSX'],
     Abarth: ['124 Spider', '500', '500C', '595', '695', 'Grande Punto', 'Punto', 'Punto Evo'],
