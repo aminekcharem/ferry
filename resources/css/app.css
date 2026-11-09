@@ -1,5 +1,18 @@
 @import 'tailwindcss';
 
+/* Lucky wheel: SVG sectors and CSS transforms keep the popup dependency-free. */
+[data-tombola] [hidden] { display: none !important; }
+.tombola-modal { width: min(94vw, 32rem); max-height: 92dvh; }
+.tombola-launcher { position: fixed; bottom: 1rem; right: 1rem; z-index: 45; max-width: calc(100vw - 2rem); }
+.tombola-wheel-wrap { position: relative; width: min(100%, 15rem); margin: 1.25rem auto 0.5rem; }
+.tombola-wheel { display: block; width: 100%; filter: drop-shadow(0 4px 6px #00496626); transform-origin: center; }
+.tombola-wheel-label { font-size: 18px; font-weight: 700; }
+.tombola-wheel-label-small { font-size: 10px; }
+.tombola-wheel-label-light { fill: white; }
+.tombola-wheel-label-dark { fill: #0f172a; }
+.tombola-pointer { position: absolute; z-index: 1; left: calc(50% - 10px); top: -3px; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 23px solid #0f172a; }
+@media (prefers-reduced-motion: reduce) { .tombola-wheel { animation: none; } }
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
